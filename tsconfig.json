@@ -1,14 +1,27 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "commonjs",
+    "module": "nodenext",
+    "experimentalDecorators": true,
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "moduleResolution": "nodenext",
+    "paths": {
+      "@src/*": ["src/*"],
+      "@routes/*": ["src/routes/*"],
+      "@utils/*": ["src/utils/*"],
+      "@middleware/*": ["src/middleware/*"],
+      "@models/*": ["src/sequelize/models/*"],
+      "@orm/*": ["src/sequelize/*"],
+      "@enums/*": ["src/enums/*"]
+    }
   },
+  
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }
