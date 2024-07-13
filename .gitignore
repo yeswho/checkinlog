@@ -1,0 +1,25 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+app.log
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Debugger configurations
+.vscode/
