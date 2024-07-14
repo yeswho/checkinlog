@@ -1,4 +1,5 @@
 import { CustomerController } from '@controllers/customerController';
+import { validateCustomer, validateCustomerUpdate } from '@validator/validationMiddlewares';
 import { Router } from 'express';
 
 const router = Router();
@@ -10,9 +11,9 @@ router.get('/', customerController.getAllCustomers);
 //Get customer by id
 router.get('/:id', customerController.getCustomerById);
 // Add a customer
-router.post('/', customerController.addCustomer);
+router.post('/', validateCustomer, customerController.addCustomer);
 // Update customer
-router.put('/:id', customerController.updateCustomer);
+router.put('/:id', validateCustomerUpdate, customerController.updateCustomer);
 // Delete customer
 router.delete('/:id', customerController.deleteCustomer);
 

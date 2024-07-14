@@ -12,7 +12,7 @@ export class CustomerController {
             next(error);
         }
     };
-    // Method to get all customers
+    // Method to get customer by ID
     getCustomerById = async (req: Request, res: Response, next: NextFunction) => {
         const { id } = req.params;
         try {
@@ -43,14 +43,10 @@ export class CustomerController {
     };
     // Method to delete a customer
     deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
-        const { id } = req.params;
         try {
-            const result = await CustomerService.deleteCustomer(id);
-            if (result) {
-                res.status(200).send('Customer deleted successfully');
-            } else {
-                res.status(404).send('Customer not found');
-            }
+            const { id } = req.params;
+            await CustomerService.deleteCustomer(id);
+            res.status(204).send();
         } catch (error) {
             next(error);
         }
