@@ -1,7 +1,6 @@
-import { GENDER } from '@src/enums/database';
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from '@sequelize/core';
 import { Attribute, AutoIncrement, NotNull, PrimaryKey, Table, Unique } from '@sequelize/core/decorators-legacy';
-import logger from '@src/utils/logger';
+import { GENDER } from '@src/enums/database';
 
 @Table({ tableName: 'Customers' })
 export class Customer extends Model<InferAttributes<Customer>, InferCreationAttributes<Customer>> {
@@ -42,5 +41,3 @@ export class Customer extends Model<InferAttributes<Customer>, InferCreationAttr
     @Attribute(DataTypes.DATE)
     declare updatedAt: Date;
 }
-
-// Customer.sync({ alter: true }).catch(logger.error);

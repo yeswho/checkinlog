@@ -44,6 +44,8 @@
     "@utils": "src/utils",
     "@orm": "src/sequelize",
     "@middleware": "src/middleware",
-    "@models": "src/sequelize/models"
+    "@models": "src/sequelize/models",
+    "@controllers": "src/controllers",
+    "@services" : "src/services"
   }
 }

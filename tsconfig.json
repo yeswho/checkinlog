@@ -18,7 +18,9 @@
       "@middleware/*": ["src/middleware/*"],
       "@models/*": ["src/sequelize/models/*"],
       "@orm/*": ["src/sequelize/*"],
-      "@enums/*": ["src/enums/*"]
+      "@enums/*": ["src/enums/*"],
+      "@services/*": ["src/services/*"],
+      "@controllers/*":["src/controllers/*"]
     }
   },
   

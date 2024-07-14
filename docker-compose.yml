@@ -3,7 +3,7 @@ services:
   app:
     build: .
     ports:
-      - "${PORT}:3000"  # Expose the port specified in .env, mapped to port 3000 in the container
+      - "${PORT}:3000"
     environment:
       - DB_HOST=db
       - DB_USER=${DB_USER}
@@ -15,13 +15,13 @@ services:
         condition: service_healthy
     volumes:
       - .:/usr/src/app 
-      - /usr/src/app/node_modules  # Persist node_modules volume
+      - /usr/src/app/node_modules
 
   db:
     image: mysql:8.0  # Using MySQL version 8.0
     command: --default-authentication-plugin=mysql_native_password
     volumes:
-      - db-data:/var/lib/mysql  # Persist MySQL data
+      - db-data:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
@@ -33,7 +33,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 10s
       retries: 10
-      interval: 20s  # Expose MySQL on port 3306
+      interval: 20s
 
 volumes:
-  db-data:  # Defines the volume for persisting database data
+  db-data:
