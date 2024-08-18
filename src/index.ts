@@ -5,6 +5,7 @@ import logger from './utils/logger';
 
 dotenv.config();
 
+//initialize database connection
 import '@orm/database'
 
 const port = process.env.PORT || 3000;

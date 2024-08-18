@@ -1,11 +1,27 @@
-import { Customer } from '@models/customer';
-import { UniqueConstraintError } from '@sequelize/core';
+import { Customer } from '@src/sequelize/models/customerModel';
+import { CreationAttributes, UniqueConstraintError } from '@sequelize/core';
 import { CustomError } from '@src/middleware/errorHandler';
+import { GENDER } from '@src/enums/database';
+import { FloorService } from './floorService';
+
+
+interface CustomerData {
+    firstname: string | undefined;
+    lastname: string;
+    address?: string | null;
+    dateofbirth: Date;
+    contact: string;
+    gender?: GENDER;
+    company?: string | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
 
 export class CustomerService {
     // Method to get all customers
     static async getAllCustomers(): Promise<Customer[]> {
         try {
+            const floorName = await FloorService.getAllFloors();
             const customers = await Customer.findAll();
             return customers;
         } catch (error: any) {
@@ -28,9 +44,11 @@ export class CustomerService {
         }
     }
     // Method to add a customer
-    static async addCustomer(data: any): Promise<Customer> {
+    static async addCustomer(data: Partial<CustomerData>): Promise<Customer> {
         try {
-            const customer = await Customer.create(data);
+            const customer = await Customer.create({
+                ...data
+            } as CreationAttributes<Customer>);         
             return customer;
         } catch (error: any) {
             if (error instanceof UniqueConstraintError) {

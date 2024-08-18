@@ -1,6 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
 import { CustomerService } from '@services/customerService';
-import { CustomError } from '@src/middleware/errorHandler';
+import { NextFunction, Request, Response } from 'express';
 
 export class CustomerController {
     // Method to get all customers

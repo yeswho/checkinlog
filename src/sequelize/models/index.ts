@@ -1,4 +1,4 @@
 
-import { Customer } from '@models/customer';
+import { Customer } from '@src/sequelize/models/customerModel';
 
 export { Customer };

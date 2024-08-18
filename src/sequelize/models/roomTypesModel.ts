@@ -1,9 +1,10 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from '@sequelize/core';
 import { Attribute, AutoIncrement, NotNull, PrimaryKey, Table, Unique } from '@sequelize/core/decorators-legacy';
-import { GENDER } from '@src/enums/database';
+import { ROOM_TYPE } from '@src/enums/database';
 
-@Table({ tableName: 'Customers' })
-export class Customer extends Model<InferAttributes<Customer>, InferCreationAttributes<Customer>> {
+
+@Table({ tableName: 'RoomType' })
+export class RoomType extends Model<InferAttributes<RoomType>, InferCreationAttributes<RoomType>> {
     @PrimaryKey
     @AutoIncrement
     @Attribute(DataTypes.INTEGER)
@@ -11,14 +12,10 @@ export class Customer extends Model<InferAttributes<Customer>, InferCreationAttr
 
     @Attribute(DataTypes.STRING(100))
     @NotNull
-    declare firstname: string;
+    declare name: string;
 
-    @Attribute(DataTypes.STRING(100))
-    @NotNull
-    declare lastname: string;
-
-    @Attribute(DataTypes.STRING(255))
-    declare address: string | null;
+    @Attribute(DataTypes.INTEGER(20))
+    declare bed: number;
 
     @Attribute(DataTypes.DATE)
     @NotNull
@@ -28,9 +25,6 @@ export class Customer extends Model<InferAttributes<Customer>, InferCreationAttr
     @NotNull
     @Unique
     declare contact: string;
-
-    @Attribute(DataTypes.ENUM(...Object.values(GENDER)))
-    declare gender: GENDER;
 
     @Attribute(DataTypes.STRING(100))
     declare company: string | null;
