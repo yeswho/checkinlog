@@ -1,7 +1,5 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from '@sequelize/core';
-import { Attribute, AutoIncrement, NotNull, PrimaryKey, Table, Unique } from '@sequelize/core/decorators-legacy';
-import { ROOM_TYPE } from '@src/enums/database';
-
+import { Attribute, AutoIncrement, NotNull, PrimaryKey, Table } from '@sequelize/core/decorators-legacy';
 
 @Table({ tableName: 'RoomType' })
 export class RoomType extends Model<InferAttributes<RoomType>, InferCreationAttributes<RoomType>> {
@@ -14,20 +12,14 @@ export class RoomType extends Model<InferAttributes<RoomType>, InferCreationAttr
     @NotNull
     declare name: string;
 
-    @Attribute(DataTypes.INTEGER(20))
+    @Attribute(DataTypes.INTEGER)
     declare bed: number;
 
-    @Attribute(DataTypes.DATE)
-    @NotNull
-    declare dateofbirth: Date;
+    @Attribute({type: DataTypes.BOOLEAN, defaultValue: false})
+    declare ac: boolean;
 
-    @Attribute(DataTypes.STRING(15))
-    @NotNull
-    @Unique
-    declare contact: string;
-
-    @Attribute(DataTypes.STRING(100))
-    declare company: string | null;
+    @Attribute({type: DataTypes.BOOLEAN, defaultValue: true})
+    declare bathroom: boolean;
 
     @Attribute(DataTypes.DATE)
     declare createdAt: Date;

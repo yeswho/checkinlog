@@ -1,7 +1,7 @@
 export enum GENDER {
-    Male = 'Male',
-    Female = 'Female',
-    Other = 'Other'
+    MALE = 'Male',
+    FEMALE = 'Female',
+    OTHER = 'Other'
 }
 
 export enum ROOM_TYPE {

@@ -49,6 +49,7 @@
     "@models": "src/sequelize/models",
     "@controllers": "src/controllers",
     "@services": "src/services",
-    "@validator": "src/validation"
+    "@validator": "src/validation",
+    "@interface": "src/interface"
   }
 }

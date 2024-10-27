@@ -39,7 +39,7 @@ export const customerUpdateSchema = Joi.object({
     gender: Joi.string()
         .valid(...Object.values(GENDER))
         .optional()
-}).or('firstname', 'lastname', 'email', 'contact', 'dateofbirth', 'gender')
+}).or('firstname', 'lastname', 'email', 'contact', 'dateofbirth', 'gender', 'address')
     .messages({
         'string.pattern.base': 'Contact number must include a country code followed by 10 digits',
         'date.less': 'Date of birth must be a valid past date in ISO format',

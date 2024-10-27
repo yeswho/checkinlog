@@ -1,24 +1,20 @@
-import { CustomError } from "@src/middleware/errorHandler";
-import { Router } from "express";
+import { RoomTypeController } from '@controllers/roomTypeController';
+import { validateRoomType, validateUpdateRoomType } from '@validator/validationMiddlewares';
+import { Router } from 'express';
 
 const router = Router();
 
-router.get("/", (req,res,next)=>{
-    try{
-    res.send("Got room type")
-    throw new CustomError('some err', 400);
-    }
-    catch(error){
-        next(error)
-    }
-});
+const roomTypeController = new RoomTypeController();
 
-router.get("/:id", (req,res,next)=>{
-    try{
-        res.send(`Got id, ${req.params.id}`)
-        throw new CustomError('no id founds error', 400)
-    }
-    catch(error){
-        next(error)
-    }
-})
+// Get all roomtype
+router.get('/', roomTypeController.getAllRoomTypes);
+//Get roomtype by id
+router.get('/:id', roomTypeController.getRoomTypeById);
+// Add a roomtype
+router.post('/', validateRoomType, roomTypeController.addRoomType);
+// Update roomtype
+router.put('/:id', validateUpdateRoomType, roomTypeController.updateRoomType);
+// Delete roomtype
+router.delete('/:id', roomTypeController.deleteRoomType);
+
+export default router;

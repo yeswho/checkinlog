@@ -1,30 +1,20 @@
+import { BookingController } from '@controllers/bookingController';
+import { validateBooking, validateUpdateBooking } from '@src/validation/validationMiddlewares';
 import { Router } from 'express';
 
 const router = Router();
 
-// Get all bookings
-router.get('/', (req, res) => {
-  res.send('Get all bookings');
-});
+const bookingController = new BookingController();
 
-// Get a specific booking
-router.get('/:id', (req, res) => {
-  res.send(`Get booking with ID ${req.params.id}`);
-});
-
-// Create a new booking
-router.post('/', (req, res) => {
-  res.send('Create a new booking');
-});
-
-// Update a booking
-router.put('/:id', (req, res) => {
-  res.send(`Update booking with ID ${req.params.id}`);
-});
-
-// Delete a booking
-router.delete('/:id', (req, res) => {
-  res.send(`Delete booking with ID ${req.params.id}`);
-});
+// Get all customers
+router.get('/', bookingController.getAllBookings);
+//Get customer by id
+router.get('/:id', bookingController.getBookingById);
+// Add a customer
+router.post('/', validateBooking, bookingController.addBooking);
+// Update customer
+router.put('/:id',validateUpdateBooking, bookingController.updateBooking);
+// Delete customer
+router.delete('/:id', bookingController.deleteBooking);
 
 export default router;
