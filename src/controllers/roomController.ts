@@ -11,7 +11,6 @@ export class RoomController {
       next(error);
     }
   };
-
   // Get room by ID
   getRoomById = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -22,7 +21,6 @@ export class RoomController {
       next(error);
     }
   };
-
   // Add a room
   addRoom= async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -32,7 +30,6 @@ export class RoomController {
       next(error);
     }
   };
-
   // Update a room
   updateRoom = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -43,7 +40,6 @@ export class RoomController {
       next(error);
     }
   };
-
   // Delete a room
   deleteRoom = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -54,4 +50,17 @@ export class RoomController {
       next(error);
     }
   };
+// Get all rooms in floor :id
+getRoomsInFloor = async (req: Request, res:Response, next: NextFunction) => {
+  try{
+    const { id } = req.params;
+    const rooms = await RoomService.getRoomsInFloor(Number(id));
+    res.status(200).json({
+      status: 'success',
+      data: rooms,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 }

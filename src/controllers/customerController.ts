@@ -11,7 +11,6 @@ export class CustomerController {
       next(error);
     }
   };
-
   // Get customer by ID
   getCustomerById = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -22,7 +21,6 @@ export class CustomerController {
       next(error);
     }
   };
-
   // Add a customer
   addCustomer = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -32,7 +30,6 @@ export class CustomerController {
       next(error);
     }
   };
-
   // Update a customer
   updateCustomer = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -43,7 +40,6 @@ export class CustomerController {
       next(error);
     }
   };
-
   // Delete a customer
   deleteCustomer = async (req: Request, res: Response, next: NextFunction) => {
     try {

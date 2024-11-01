@@ -22,6 +22,9 @@ export class Booking extends Model<InferAttributes<Booking>, InferCreationAttrib
     @NotNull
     declare check_in: Date;
 
+    @Attribute(DataTypes.DOUBLE)
+    declare rate: number;
+
     @Attribute(DataTypes.DATE)
     @NotNull
     declare check_out: Date;

@@ -11,7 +11,6 @@ export class RoomTypeController {
       next(error);
     }
   };
-
   // Get roomType by ID
   getRoomTypeById = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -22,7 +21,6 @@ export class RoomTypeController {
       next(error);
     }
   };
-
   // Add a roomType
   addRoomType= async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -32,7 +30,6 @@ export class RoomTypeController {
       next(error);
     }
   };
-
   // Update a roomType
   updateRoomType = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -43,7 +40,6 @@ export class RoomTypeController {
       next(error);
     }
   };
-
   // Delete a roomType
   deleteRoomType = async (req: Request, res: Response, next: NextFunction) => {
     try {

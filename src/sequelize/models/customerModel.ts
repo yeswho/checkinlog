@@ -29,6 +29,11 @@ export class Customer extends Model<InferAttributes<Customer>, InferCreationAttr
     @Unique
     declare contact: string;
 
+    @Attribute(DataTypes.STRING(15))
+    @NotNull
+    @Unique
+    declare email: string;
+
     @Attribute(DataTypes.ENUM(...Object.values(GENDER)))
     declare gender: GENDER;
 
