@@ -4,17 +4,13 @@ export enum GENDER {
     OTHER = 'Other'
 }
 
-export enum ROOM_TYPE {
-    SINGLE = 'Single',
-    DOUBLE = 'Double',
-    APARTMENT = 'Apartment'
-}
-
 export enum PAYMENT_MODE{
     CASH = 'Cash',
-    DEBIT_CARD = 'Debit card',
-    CREDIT_CARD = 'Credit card',
-    ONLINE = 'Online'
+    CARD = 'Card',
+    ONLINE = 'Online',
+    UPI = 'UPI',
+    CHEQUE = 'Cheque',
+    OTHER = 'Other'
 }
 
 export enum ROOM_STATUS{
@@ -22,4 +18,19 @@ export enum ROOM_STATUS{
     OCCUPIED = 'Occupied',
     UNDER_MAINTAINANCE = 'Under maintainance',
     UNAVAILABLE = 'Unavailable'
+}
+
+export enum BOOKING_STATUS{
+    CANCELLED = 'Cancelled',
+    COMPLETED = 'Completed',
+    NO_SHOW = 'No show',
+    CHECKED_OUT = 'Checked out',
+    CHECKED_IN = 'Checked in',
+    BOOKED = 'Booked'
+}
+
+export enum TAX_RATES{
+    TAX_RATE = 0.10,
+    VAT_RATE = 0.13,
+    SERVICE_CHARGE = 0.05
 }

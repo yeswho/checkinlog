@@ -22,6 +22,7 @@ class BaseService<T extends Model> {
   // Find by ID
   async findById(id: number): Promise<T | null> {
     try {
+      
       const item = await this.model.findByPk(id);
       if (!item) {
         throw new CustomError('Entry not found', 404);

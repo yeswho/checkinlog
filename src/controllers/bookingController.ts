@@ -68,9 +68,8 @@ export class BookingController {
       const { id } = req.params;
       try {
         const bookings = await BookingService.getBookingsByCustomerId (Number(id));
-        res.status(200).json({
-          status: 'success',
-          data: bookings,
+        res.json({
+          bookings,
         });
       } catch (error) {
         next(error);
@@ -96,6 +95,20 @@ export class BookingController {
           data: details
         })
       } catch (error){
+        next(error)
+      }
+    }
+    // generate bill for booking
+    generateBill = async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id } = req.params;
+        const { totalAmount, discount, extraCharge, remarks } = req.body;
+        const bill = await BookingService.generateBill(Number(id), totalAmount, discount, extraCharge, remarks);
+        res.status(200).json({
+          status: 'success',
+          data: bill
+        })
+      } catch (error) {
         next(error)
       }
     }

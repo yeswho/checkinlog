@@ -26,10 +26,9 @@ export class Customer extends Model<InferAttributes<Customer>, InferCreationAttr
 
     @Attribute(DataTypes.STRING(15))
     @NotNull
-    @Unique
     declare contact: string;
 
-    @Attribute(DataTypes.STRING(15))
+    @Attribute(DataTypes.STRING(100))
     @NotNull
     @Unique
     declare email: string;

@@ -1,15 +1,22 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from '@sequelize/core';
-import { Attribute, AutoIncrement, BelongsTo, NotNull, PrimaryKey, Table } from '@sequelize/core/decorators-legacy';
+import { Attribute, AutoIncrement, BelongsTo, BelongsToMany, NotNull, PrimaryKey, Table, HasMany } from '@sequelize/core/decorators-legacy';
 import { ROOM_STATUS } from '@src/enums/database';
 import { Floor } from '@models/floorsModel';
-import { RoomType } from '@models/roomTypesModel';
+import { RoomType } from './index';
+import { Booking } from './index';
+import { Maintenance } from '@models/maintenance';
+import { BookingRoom } from './index';
 
-@Table({ tableName: 'Room' })
+@Table({ tableName: 'rooms' })
 export class Room extends Model<InferAttributes<Room>, InferCreationAttributes<Room>> {
     @PrimaryKey
     @AutoIncrement
     @Attribute(DataTypes.INTEGER)
     declare id: CreationOptional<number>;
+
+    @Attribute(DataTypes.STRING(100))
+    @NotNull
+    declare name: string;
 
     @Attribute(DataTypes.INTEGER)
     @NotNull
@@ -23,7 +30,7 @@ export class Room extends Model<InferAttributes<Room>, InferCreationAttributes<R
     declare rate: number;
 
     @Attribute(DataTypes.ENUM(...Object.values(ROOM_STATUS)))
-    declare status: ROOM_STATUS
+    declare status: ROOM_STATUS;
 
     @Attribute(DataTypes.DATE)
     declare createdAt: CreationOptional<Date>;
@@ -36,4 +43,16 @@ export class Room extends Model<InferAttributes<Room>, InferCreationAttributes<R
 
     @BelongsTo(() => RoomType, { foreignKey: 'roomType_id' })
     roomType!: RoomType;
+
+    @BelongsToMany(() => Booking, { 
+        through: () => BookingRoom, 
+        foreignKey: 'room_id', 
+        otherKey: 'booking_id',
+        inverse: { as: 'rooms' } 
+    })
+    declare bookings: Booking[];
+    
+
+    @HasMany(() => Maintenance, { foreignKey: 'room_id' })
+    maintenances!: Maintenance[];
 }

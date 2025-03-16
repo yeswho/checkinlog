@@ -2,19 +2,19 @@
 import { Sequelize } from '@sequelize/core';
 import { MySqlDialect } from '@sequelize/mysql';
 import dotenv from 'dotenv';
-import { Customer, Floor, RoomType, Room, Booking } from '@src/sequelize/models/index';
+import { Customer, Floor, RoomType, Room, Booking, User, Maintenance, BookingRoom, Complaint, Billing } from '@src/sequelize/models/index';
 import logger from '@src/utils/logger';
 
 dotenv.config();
 
 const sequelize = new Sequelize({
-    dialect: MySqlDialect,
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: parseInt(process.env.DB_PORT || '3306', 10),
-    models: [Customer, Floor, RoomType, Room, Booking],
+  dialect: MySqlDialect,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: parseInt(process.env.DB_PORT || '3306', 10),
+  models: [Customer, Floor, RoomType, User, Maintenance, Room, Booking, BookingRoom, Complaint, Billing]
 });
 
 (async () => {

@@ -3,16 +3,25 @@ services:
   app:
     build: .
     ports:
-      - "${PORT}:3000"
+      - "${PORT}:8000"
     environment:
       - DB_HOST=db
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
       - NODE_ENV=${NODE_ENV}
+
+      - REDIS_HOST=redis
+      - REDIS_PORT=${REDIS_PORT}
+      - JWT_ACCESS_SECRET=${JWT_SECRET_KEY}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
+    # command: >
+    #   sh -c "npx sequelize-cli db:migrate && npm start"
     volumes:
       - .:/usr/src/app 
       - /usr/src/app/node_modules
@@ -30,10 +39,23 @@ services:
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "db"]
       timeout: 10s
       retries: 10
       interval: 20s
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   db-data:
+  redis-data:

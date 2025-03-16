@@ -24,5 +24,7 @@ router.get('/customer/:id', bookingController.getBookingsByCustomerId);
 router.put('/update-rate', bookingController.updateBookingRate);
 //Get all booking detail
 router.get('/details/:id', bookingController.getBookingDetails);
+//Generate bill for a booking
+router.post('/bill/:id', bookingController.generateBill);
 
 export default router;

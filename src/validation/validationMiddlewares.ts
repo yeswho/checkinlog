@@ -4,6 +4,9 @@ import {floorSchema, floorUpdateSchema} from '@validator/schema/floorSchema';
 import {roomTypeSchema, roomTypeUpdateSchema} from '@validator/schema/roomTypeSchema'
 import { roomSchema, roomUpdateSchema } from './schema/roomSchema';
 import { bookingSchema, bookingUpdateSchema } from './schema/bookingSchema';
+import { complaintSchema, complaintUpdateSchema } from './schema/complaintSchema';
+import { maintenanceSchema, maintenanceUpdateSchema } from './schema/maintenanceSchema';
+import {billingSchema, billingUpdateSchema} from './schema/billingSchema';
 
 export const validateCustomer = (req: Request, res: Response, next: NextFunction) => {
     const { error } = customerSchema.validate(req.body);
@@ -84,3 +87,52 @@ export const validateUpdateBooking = (req: Request, res: Response, next:NextFunc
     }
     next();
 }
+
+export const validateComplaint = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = complaintSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+
+export const validateComplaintUpdate = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = complaintUpdateSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+
+export const validateMaintenance = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = maintenanceSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+
+export const validateMaintenanceUpdate = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = maintenanceUpdateSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+
+export const validateBilling = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = billingSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+
+export const validateBillingUpdate = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = billingUpdateSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+

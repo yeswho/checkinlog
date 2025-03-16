@@ -13,11 +13,14 @@ RUN npm install
 # Install ts-node globally
 RUN npm install -g ts-node
 
+# Install Redis client
+RUN npm install ioredis
+
 # Copy the rest of your application source code
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 8000
 
 # Run your app using ts-node
 CMD ["ts-node", "src/index.ts"]

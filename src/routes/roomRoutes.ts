@@ -6,15 +6,17 @@ const router = Router();
 
 const roomController = new RoomController();
 
-// Get all room
+// Get printable bill by booking ID
+router.get('/details', roomController.getRoomDetails);
+// Get all billings
 router.get('/', roomController.getAllRooms);
-//Get room by id
+// Get billing by ID
 router.get('/:id', roomController.getRoomById);
-// Add a room
+// Add a billing (with validation)
 router.post('/', validateRoom, roomController.addRoom);
-// Update room
+// Update billing (with validation)
 router.put('/:id', validateUpdateRoom, roomController.updateRoom);
-// Delete room
-router.delete('/:id', roomController.updateRoom);
+// Delete billing
+router.delete('/:id', roomController.deleteRoom);
 
 export default router;

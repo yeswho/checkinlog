@@ -24,8 +24,8 @@ export class RoomController {
   // Add a room
   addRoom= async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const newBooking = await RoomService.create(req.body);
-      res.status(201).json(newBooking);
+      const newRoom = await RoomService.create(req.body);
+      res.status(201).json(newRoom);
     } catch (error) {
       next(error);
     }
@@ -34,8 +34,8 @@ export class RoomController {
   updateRoom = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
-      const updatedBooking = await RoomService.update(Number(id), req.body);
-      res.json(updatedBooking);
+      const updatedRoom = await RoomService.update(Number(id), req.body);
+      res.json(updatedRoom);
     } catch (error) {
       next(error);
     }
@@ -59,6 +59,15 @@ getRoomsInFloor = async (req: Request, res:Response, next: NextFunction) => {
       status: 'success',
       data: rooms,
     });
+  } catch (error) {
+    next(error);
+  }
+}
+//Get room details for table
+getRoomDetails = async (req:Request, res: Response, next: NextFunction) => {
+  try{
+    const roomDetails = await RoomService.getAllRoomDetails();
+    res.json(roomDetails);
   } catch (error) {
     next(error);
   }

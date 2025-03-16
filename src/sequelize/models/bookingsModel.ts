@@ -1,9 +1,11 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from '@sequelize/core';
-import { Attribute, AutoIncrement, BelongsTo, NotNull, PrimaryKey, Table, Unique } from '@sequelize/core/decorators-legacy';
-import { PAYMENT_MODE } from '@src/enums/database';
-import { Room } from '@src/sequelize/models/roomsModel';
+import { Attribute, AutoIncrement, BelongsTo, BelongsToMany, NotNull, PrimaryKey, Table } from '@sequelize/core/decorators-legacy';
+import { BOOKING_STATUS, PAYMENT_MODE } from '@src/enums/database';
 import { Customer } from '@src/sequelize/models/customerModel';
-@Table({ tableName: 'Bookings' })
+import { Room } from './index';
+import { BookingRoom } from './index';
+
+@Table({ tableName: 'bookings' })
 export class Booking extends Model<InferAttributes<Booking>, InferCreationAttributes<Booking>> {
     @PrimaryKey
     @AutoIncrement
@@ -13,10 +15,6 @@ export class Booking extends Model<InferAttributes<Booking>, InferCreationAttrib
     @Attribute(DataTypes.INTEGER)
     @NotNull
     declare customer_id: number;
-
-    @Attribute(DataTypes.INTEGER)
-    @NotNull
-    declare room_id: number;
 
     @Attribute(DataTypes.DATE)
     @NotNull
@@ -29,8 +27,15 @@ export class Booking extends Model<InferAttributes<Booking>, InferCreationAttrib
     @NotNull
     declare check_out: Date;
 
+    @Attribute(DataTypes.INTEGER)
+    @NotNull
+    declare pax: number;
+
     @Attribute(DataTypes.ENUM(...Object.values(PAYMENT_MODE)))
     declare payment_mode: PAYMENT_MODE;
+
+    @Attribute(DataTypes.ENUM(...Object.values(BOOKING_STATUS)))
+    declare status: BOOKING_STATUS;
 
     @Attribute(DataTypes.DATE)
     declare createdAt: CreationOptional<Date>;
@@ -41,6 +46,12 @@ export class Booking extends Model<InferAttributes<Booking>, InferCreationAttrib
     @BelongsTo(() => Customer, { foreignKey: 'customer_id' })
     customer!: Customer;
 
-    @BelongsTo(() => Room, { foreignKey: 'room_id' })
-    room!: Room;
+    @BelongsToMany(() => Room, { 
+        through: () => BookingRoom, 
+        foreignKey: 'booking_id', 
+        otherKey: 'room_id',
+        inverse: { as: 'bookings' } 
+    })
+    declare rooms: Room[];
+    
 }
