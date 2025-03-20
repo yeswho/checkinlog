@@ -19,8 +19,8 @@ bcrypt.hash("admin@123", 10, (err: any, hash: any) => {
 // Middleware setup
 app.use(helmet());
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' })); 
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(morgan('combined', { stream: { write: (message: string) => logger.info(message.trim())}}));
 
 // Routes

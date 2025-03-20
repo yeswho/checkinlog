@@ -1,23 +1,18 @@
 import { Router } from 'express';
 import { ComplaintController } from '@controllers/complaintController';
 import { validateComplaint, validateComplaintUpdate } from '@validator/validationMiddlewares';
+import { authenticateToken, authorizeRole } from '@src/middleware/auth';
 
 const router = Router();
 const complaintController = new ComplaintController();
 
-// Get all complaints
-router.get('/', complaintController.getAllComplaints);
+// Authenticated routes (require authentication)
+router.get('/', authenticateToken, complaintController.getAllComplaints);
+router.get('/:id', authenticateToken, complaintController.getComplaintById);
 
-// Get complaint by ID
-router.get('/:id', complaintController.getComplaintById);
-
-// Add a complaint
-router.post('/', validateComplaint, complaintController.addComplaint);
-
-// Update a complaint
-router.put('/:id', validateComplaintUpdate, complaintController.updateComplaint);
-
-// Delete a complaint
-router.delete('/:id', complaintController.deleteComplaint);
+// Admin-only routes (require authentication and admin role)
+router.post('/', authenticateToken, authorizeRole('admin'), validateComplaint, complaintController.addComplaint);
+router.put('/:id', authenticateToken, authorizeRole('admin'), validateComplaintUpdate, complaintController.updateComplaint);
+router.delete('/:id', authenticateToken, authorizeRole('admin'), complaintController.deleteComplaint);
 
 export default router;

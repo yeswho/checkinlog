@@ -1,20 +1,18 @@
+import { Router } from 'express';
 import { RoomTypeController } from '@controllers/roomTypeController';
 import { validateRoomType, validateUpdateRoomType } from '@validator/validationMiddlewares';
-import { Router } from 'express';
+import { authenticateToken, authorizeRole } from '@src/middleware/auth';
 
 const router = Router();
-
 const roomTypeController = new RoomTypeController();
 
-// Get all roomtype
-router.get('/', roomTypeController.getAllRoomTypes);
-//Get roomtype by id
-router.get('/:id', roomTypeController.getRoomTypeById);
-// Add a roomtype
-router.post('/', validateRoomType, roomTypeController.addRoomType);
-// Update roomtype
-router.put('/:id', validateUpdateRoomType, roomTypeController.updateRoomType);
-// Delete roomtype
-router.delete('/:id', roomTypeController.deleteRoomType);
+// Authenticated routes (require authentication)
+router.get('/', authenticateToken, roomTypeController.getAllRoomTypes);
+router.get('/:id', authenticateToken, roomTypeController.getRoomTypeById);
+
+// Admin-only routes (require authentication and admin role)
+router.post('/', authenticateToken, authorizeRole('admin'), validateRoomType, roomTypeController.addRoomType);
+router.put('/:id', authenticateToken, authorizeRole('admin'), validateUpdateRoomType, roomTypeController.updateRoomType);
+router.delete('/:id', authenticateToken, authorizeRole('admin'), roomTypeController.deleteRoomType);
 
 export default router;

@@ -5,12 +5,37 @@ export class CustomerController {
   // Get all customers
   getAllCustomers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const customers = await CustomerService.findAll();
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+  
+      const { data, total } = await CustomerService.findAllPaginated(page, limit);
+  
+      res.json({
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  //Search a customer
+  searchCustomer = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const query = req.query.query as string;
+      console.log("Search Query:", query);
+      const customers = await CustomerService.searchCustomers(query);
       res.json(customers);
     } catch (error) {
       next(error);
     }
   };
+
   // Get customer by ID
   getCustomerById = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;

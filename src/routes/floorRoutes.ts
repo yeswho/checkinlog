@@ -1,20 +1,18 @@
+import { Router } from 'express';
 import { FloorController } from '@controllers/floorController';
 import { validateFloor, validateUpdateFloor } from '@validator/validationMiddlewares';
-import { Router } from 'express';
+import { authenticateToken, authorizeRole } from '@src/middleware/auth';
 
 const router = Router();
-
 const floorController = new FloorController();
 
-// Get all customers
-router.get('/', floorController.getAllFloors);
-//Get customer by id
-router.get('/:id', floorController.getFloorById);
-// Add a customer
-router.post('/', validateFloor, floorController.addFloor);
-// Update customer
-router.put('/:id', validateUpdateFloor, floorController.updateFloor);
-// Delete customer
-router.delete('/:id', floorController.deleteFloor);
+// Authenticated routes (require authentication)
+router.get('/', authenticateToken, floorController.getAllFloors);
+router.get('/:id', authenticateToken, floorController.getFloorById);
+
+// Admin-only routes (require authentication and admin role)
+router.post('/', authenticateToken, authorizeRole('admin'), validateFloor, floorController.addFloor);
+router.put('/:id', authenticateToken, authorizeRole('admin'), validateUpdateFloor, floorController.updateFloor);
+router.delete('/:id', authenticateToken, authorizeRole('admin'), floorController.deleteFloor);
 
 export default router;

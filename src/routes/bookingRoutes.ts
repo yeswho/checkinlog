@@ -1,30 +1,27 @@
 import { BookingController } from '@controllers/bookingController';
 import { validateBooking, validateUpdateBooking } from '@src/validation/validationMiddlewares';
+import { authenticateToken, authorizeRole } from '@src/middleware/auth';
 import { Router } from 'express';
 
 const router = Router();
-
 const bookingController = new BookingController();
 
-// Get all customers
-router.get('/', bookingController.getAllBookings);
-//Get customer by id
-router.get('/:id', bookingController.getBookingById);
-//Add a customer
-router.post('/', validateBooking, bookingController.addBooking);
-//Update customer
-router.put('/:id',validateUpdateBooking, bookingController.updateBooking);
-//Delete customer
-router.delete('/:id', bookingController.deleteBooking);
-//Find booking in range
-router.get('/booking-range', bookingController.getBookingsInDateRange);
-//Find all bookings of a customer
-router.get('/customer/:id', bookingController.getBookingsByCustomerId);
-//Manually update room rate in a booking
-router.put('/update-rate', bookingController.updateBookingRate);
-//Get all booking detail
-router.get('/details/:id', bookingController.getBookingDetails);
-//Generate bill for a booking
-router.post('/bill/:id', bookingController.generateBill);
+// Public routes (if any)
+// Example: Search bookings (public, no authentication required)
+router.get('/search', bookingController.searchBooking);
+
+// Authenticated routes (require authentication)
+router.get('/', authenticateToken, bookingController.getAllBookings); 
+router.get('/:id', authenticateToken, bookingController.getBookingById); 
+router.get('/booking-range', authenticateToken, bookingController.getBookingsInDateRange); 
+router.get('/customer/:id', authenticateToken, bookingController.getBookingsByCustomerId); 
+router.get('/details/:id', authenticateToken, bookingController.getBookingDetails); 
+
+// Admin-only routes (require authentication and admin role)
+router.post('/', authenticateToken, authorizeRole('admin'), validateBooking, bookingController.addBooking);
+router.put('/:id', authenticateToken, authorizeRole('admin'), validateUpdateBooking, bookingController.updateBooking);
+router.delete('/:id', authenticateToken, authorizeRole('admin'), bookingController.deleteBooking);
+router.put('/update-rate', authenticateToken, authorizeRole('admin'), bookingController.updateBookingRate);
+router.post('/bill/:id', authenticateToken, authorizeRole('admin'), bookingController.generateBill);
 
 export default router;

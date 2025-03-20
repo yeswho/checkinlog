@@ -1,5 +1,6 @@
 import { literal, Op, sql } from '@sequelize/core';
 import { BOOKING_STATUS, PAYMENT_MODE, ROOM_STATUS } from '@src/enums/database';
+import { QueryTypes } from "sequelize";
 import { CustomError } from '@src/middleware/errorHandler';
 import { Billing, Booking, BookingRoom, Customer, Floor, Room, RoomType } from '@src/sequelize/models';
 import BaseService from '@src/services/baseService';
@@ -163,7 +164,7 @@ class BookingService extends BaseService<Booking> {
               {
                 [Op.or]: [
                   {
-                    check_in: { [Op.lt]: bookingAttributes.check_out }, // New booking starts before existing booking ends
+                    check_in: { [Op.lte]: bookingAttributes.check_out }, // New booking starts before existing booking ends
                     check_out: { [Op.gt]: bookingAttributes.check_in }, // New booking ends after existing booking starts
                   },
                 ],
@@ -240,9 +241,72 @@ class BookingService extends BaseService<Booking> {
     }
   }
 
-  async findAll(): Promise<any[]> {
+  // async findAll(): Promise<any[]> {
+  //   try {
+  //     const bookings = await Booking.findAll({
+  //       include: [
+  //         {
+  //           model: Customer,
+  //           attributes: ['id', 'firstname', 'lastname', 'email', 'contact'],
+  //         },
+  //         {
+  //           model: Room,
+  //           include: [
+  //             { model: Floor, attributes: ['name'] },
+  //             { model: RoomType, attributes: ['name'] },
+  //           ],
+  //           through: { attributes: [] },
+  //         },
+  //       ],
+  //       order: [['createdAt', 'DESC']],
+  //     });
+
+  //     if (!bookings) {
+  //       throw new CustomError('No bookings found', 404);
+  //     }
+
+  //     return bookings.map((booking) => {
+  //       const checkIn = new Date(booking.check_in);
+  //       const checkOut = new Date(booking.check_out);
+  //       const checkInNepal = new Date(checkIn.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
+  //       const checkOutNepal = new Date(checkOut.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
+  //       const checkInDateOnly = new Date(checkInNepal.getFullYear(), checkInNepal.getMonth(), checkInNepal.getDate());
+  //       const checkOutDateOnly = new Date(checkOutNepal.getFullYear(), checkOutNepal.getMonth(), checkOutNepal.getDate());
+  //       const duration = (checkOutDateOnly.getTime() - checkInDateOnly.getTime()) / (1000 * 3600 * 24);
+  //       const totalPrice = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
+
+  //       return {
+  //         id: booking.id,
+  //         customer_id: booking.customer_id,
+  //         rooms: booking.rooms,
+  //         check_in: booking.check_in,
+  //         check_out: booking.check_out,
+  //         duration,
+  //         totalPrice,
+  //         status: booking.status as BOOKING_STATUS,
+  //         rate: booking.rate,
+  //         pax: booking.pax,
+  //         payment_mode: booking.payment_mode as PAYMENT_MODE,
+  //         createdAt: booking.createdAt,
+  //         updatedAt: booking.updatedAt,
+  //         customer: booking.customer,
+  //       };
+  //     });
+  //   } catch (error) {
+  //     console.log(error);
+  //     if (error instanceof CustomError) {
+  //       throw error;
+  //     }
+  //     throw new CustomError('Failed to fetch bookings', 500);
+  //   }
+  // }
+
+  // Update rate manually
+  async findAllPaginated(page: number = 1, limit: number = 10): Promise<{ data: any[]; total: number }> {
     try {
-      const bookings = await Booking.findAll({
+      const offset = (page - 1) * limit;
+  
+      const { count, rows: bookings } = await Booking.findAndCountAll({
         include: [
           {
             model: Customer,
@@ -257,13 +321,16 @@ class BookingService extends BaseService<Booking> {
             through: { attributes: [] },
           },
         ],
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
       });
-
-      if (!bookings) {
+  
+      if (!bookings || bookings.length === 0) {
         throw new CustomError('No bookings found', 404);
       }
-
-      return bookings.map((booking) => {
+  
+      const formattedBookings = bookings.map((booking) => {
         const checkIn = new Date(booking.check_in);
         const checkOut = new Date(booking.check_out);
         const checkInNepal = new Date(checkIn.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
@@ -272,7 +339,7 @@ class BookingService extends BaseService<Booking> {
         const checkOutDateOnly = new Date(checkOutNepal.getFullYear(), checkOutNepal.getMonth(), checkOutNepal.getDate());
         const duration = (checkOutDateOnly.getTime() - checkInDateOnly.getTime()) / (1000 * 3600 * 24);
         const totalPrice = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
-
+  
         return {
           id: booking.id,
           customer_id: booking.customer_id,
@@ -290,6 +357,8 @@ class BookingService extends BaseService<Booking> {
           customer: booking.customer,
         };
       });
+  
+      return { data: formattedBookings, total: count };
     } catch (error) {
       console.log(error);
       if (error instanceof CustomError) {
@@ -298,8 +367,9 @@ class BookingService extends BaseService<Booking> {
       throw new CustomError('Failed to fetch bookings', 500);
     }
   }
-
-  // Update rate manually
+ 
+ 
+ 
   async updateBookingRate(bookingId: number, newRate: number): Promise<Booking> {
     try {
       const booking = await Booking.findByPk(bookingId);
@@ -567,6 +637,122 @@ class BookingService extends BaseService<Booking> {
       throw new CustomError('Failed to generate bill', 500);
     }
   }
+
+
+  async searchBookings(query: string = "", page: number = 1, limit: number = 10): Promise<{ data: any[]; total: number }> {
+    try {
+      if (!this.model.sequelize) {
+        throw new CustomError("Sequelize instance not found", 500);
+      }
+  
+      const offset = (page - 1) * limit;
+      const queryCondition = query.trim() ? `%${query}%` : "%"; // Use wildcard if query is empty
+  
+      const results: any[] = await this.model.sequelize.query(
+        `
+        SELECT 
+            b.id AS booking_id,
+            b.customer_id,
+            b.check_in,
+            b.check_out,
+            b.status,
+            b.rate,
+            b.pax,
+            b.payment_mode,
+            b.createdAt,
+            b.updatedAt,
+            c.id AS customer_id,
+            c.firstname,
+            c.lastname,
+            c.email,
+            c.contact,
+            r.id AS room_id,
+            r.name AS room_name,
+            r.rate AS room_rate,
+            f.name AS floor_name,
+            rt.name AS room_type_name,
+            COUNT(*) OVER() AS total
+        FROM bookings b
+        JOIN Customers c ON b.customer_id = c.id
+        LEFT JOIN booking_rooms br ON b.id = br.booking_id
+        LEFT JOIN rooms r ON br.room_id = r.id
+        LEFT JOIN Floor f ON r.floor_id = f.id
+        LEFT JOIN RoomType rt ON r.roomType_id = rt.id
+        WHERE 
+            c.firstname LIKE :query
+            OR c.lastname LIKE :query
+            OR c.email LIKE :query
+            OR r.name LIKE :query
+        ORDER BY b.createdAt DESC
+        LIMIT :limit OFFSET :offset;
+        `,
+        {
+          replacements: { query: queryCondition, limit, offset },
+          type: QueryTypes.SELECT,
+        }
+      );
+  
+      if (!results || results.length === 0) {
+        throw new CustomError("No bookings found", 404);
+      }
+  
+      const total = results.length > 0 ? Number(results[0]?.total || 0) : 0;
+  
+      const formattedBookings = results.map((booking) => {
+        if (!booking) return null;
+  
+        const checkIn = new Date(booking.check_in);
+        const checkOut = new Date(booking.check_out);
+        const checkInNepal = new Date(checkIn.toLocaleString("en-US", { timeZone: "Asia/Kathmandu" }));
+        const checkOutNepal = new Date(checkOut.toLocaleString("en-US", { timeZone: "Asia/Kathmandu" }));
+        const checkInDateOnly = new Date(checkInNepal.getFullYear(), checkInNepal.getMonth(), checkInNepal.getDate());
+        const checkOutDateOnly = new Date(checkOutNepal.getFullYear(), checkOutNepal.getMonth(), checkOutNepal.getDate());
+        const duration = (checkOutDateOnly.getTime() - checkInDateOnly.getTime()) / (1000 * 3600 * 24);
+  
+        return {
+          id: booking.booking_id,
+          customer_id: booking.customer_id,
+          check_in: booking.check_in,
+          check_out: booking.check_out,
+          duration,
+          totalPrice: booking.room_rate ? booking.room_rate * duration : 0,
+          status: booking.status as BOOKING_STATUS,
+          rate: booking.rate,
+          pax: booking.pax,
+          payment_mode: booking.payment_mode as PAYMENT_MODE,
+          createdAt: booking.createdAt,
+          updatedAt: booking.updatedAt,
+          customer: {
+            id: booking.customer_id,
+            firstname: booking.firstname,
+            lastname: booking.lastname,
+            email: booking.email,
+            contact: booking.contact,
+          },
+          room: booking.room_id
+            ? {
+                id: booking.room_id,
+                name: booking.room_name,
+                rate: booking.room_rate,
+                floor: booking.floor_name,
+                type: booking.room_type_name,
+              }
+            : null,
+        };
+      }).filter(Boolean); // Remove null values
+  
+      return { data: formattedBookings, total };
+    } catch (error) {
+      console.error("Error in searchBookings:", error);
+      if (error instanceof CustomError) {
+        throw error;
+      }
+      throw new CustomError("Failed to search bookings", 500);
+    }
+  }
+  
+  
+  
 
 }
 

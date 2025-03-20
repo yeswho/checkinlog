@@ -1,24 +1,18 @@
+import { Router } from 'express';
 import { MaintenanceController } from '@controllers/maintenanceController';
 import { validateMaintenance, validateMaintenanceUpdate } from '@validator/validationMiddlewares';
-import { Router } from 'express';
+import { authenticateToken, authorizeRole } from '@src/middleware/auth';
 
 const router = Router();
-
 const maintenanceController = new MaintenanceController();
 
-// Get all maintenance records
-router.get('/', maintenanceController.getAllMaintenance);
+// Authenticated routes (require authentication)
+router.get('/', authenticateToken, maintenanceController.getAllMaintenance);
+router.get('/:id', authenticateToken, maintenanceController.getMaintenanceById);
 
-// Get maintenance record by ID
-router.get('/:id', maintenanceController.getMaintenanceById);
-
-// Add a maintenance record
-router.post('/', validateMaintenance, maintenanceController.addMaintenance);
-
-// Update a maintenance record
-router.put('/:id', validateMaintenanceUpdate, maintenanceController.updateMaintenance);
-
-// Delete a maintenance record
-router.delete('/:id', maintenanceController.deleteMaintenance);
+// Admin-only routes (require authentication and admin role)
+router.post('/', authenticateToken, authorizeRole('admin'), validateMaintenance, maintenanceController.addMaintenance);
+router.put('/:id', authenticateToken, authorizeRole('admin'), validateMaintenanceUpdate, maintenanceController.updateMaintenance);
+router.delete('/:id', authenticateToken, authorizeRole('admin'), maintenanceController.deleteMaintenance);
 
 export default router;

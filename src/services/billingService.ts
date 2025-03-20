@@ -89,9 +89,9 @@ class BillingService extends BaseService<Billing> {
                     contact: booking.customer.contact,
                 },
                 booking: {
-                    checkIn: booking.check_in.toISOString().split('T')[0],
-                    checkOut: booking.check_out.toISOString().split('T')[0],
-                    duration: `${duration} days`,
+                    checkIn: booking.check_in,
+                    checkOut: booking.check_out,
+                    duration: `${duration} nights`,
                 },
                 rooms: booking.rooms.map((room) => ({
                     name: room.name,
@@ -144,6 +144,7 @@ class BillingService extends BaseService<Billing> {
                         through: { attributes: [] },
                     },
                 ],
+                order: [['createdAt', 'DESC']],
             });
 
             if (!completedBookings || completedBookings.length === 0) {
@@ -193,9 +194,9 @@ class BillingService extends BaseService<Billing> {
                             contact: booking.customer.contact,
                         },
                         booking: {
-                            checkIn: booking.check_in.toISOString().split('T')[0],
-                            checkOut: booking.check_out.toISOString().split('T')[0],
-                            duration: `${duration} days`,
+                            checkIn: booking.check_in,
+                            checkOut: booking.check_out,
+                            duration: `${duration} Night(s)`,
                         },
                         rooms: booking.rooms.map((room) => ({
                             name: room.name,

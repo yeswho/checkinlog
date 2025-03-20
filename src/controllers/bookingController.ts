@@ -5,12 +5,38 @@ export class BookingController {
   // Get all bookings
   getAllBookings = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const bookings = await BookingService.findAll();
-      res.json(bookings);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+  
+      const { data, total } = await BookingService.findAllPaginated(page, limit);
+  
+      res.json({
+        data,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      });
     } catch (error) {
       next(error);
     }
   };
+
+  searchBooking = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const query = req.query.query as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+  
+      const { data, total } = await BookingService.searchBookings(query, page, limit);
+      res.json({ data, total });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   // Get booking by ID
   getBookingById = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;

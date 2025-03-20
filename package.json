@@ -30,7 +30,9 @@
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.10.2",
+    "nodemailer": "^6.10.0",
     "sequelize": "^6.37.3",
     "sequelize-cli": "^6.6.2",
     "sequelize-typescript": "^2.1.6",
@@ -47,6 +49,8 @@
     "@types/joi": "^17.2.3",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
+    "@types/multer": "^1.4.12",
+    "@types/nodemailer": "^6.4.17",
     "ts-node-dev": "^2.0.0"
   },
   "_moduleAliases": {
