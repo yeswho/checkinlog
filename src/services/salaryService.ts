@@ -1,7 +1,11 @@
 import { Op } from '@sequelize/core';
 import { Employee } from '@src/sequelize/models';
 import { Salary } from '@src/sequelize/models/salary';
+import { Expense } from '@src/sequelize/models/expenses';
 import BaseService from '@src/services/baseService';
+import ExpenseService from '@src/services/expenseService';
+import { EXPENSE_CATEGORY } from '@src/enums/database';
+
 
 class SalaryService extends BaseService<Salary> {
     constructor() {
@@ -22,6 +26,35 @@ class SalaryService extends BaseService<Salary> {
             return salaries;
         } catch (error) {
             throw new Error('Failed to fetch salaries with employee details');
+        }
+    }
+
+     async createSalaryWithAdvanceDeduction(data: any): Promise<Salary> {
+        try {
+            const totalAdvance = await ExpenseService.getEmployeeAdvances(data.employee_id);
+            
+            // Create salary record with advance deduction
+            const salary = await Salary.create({
+                ...data,
+                advance: totalAdvance,
+                total_salary: data.basic_salary + (data.bonus || 0) + (data.overtime || 0) - Number(totalAdvance)
+            });
+
+            // Mark advances as deducted (optional - could add a flag to expense model)
+            await Expense.update(
+                { is_deducted: true },
+                { 
+                    where: { 
+                        category: EXPENSE_CATEGORY.EMPLOYEE_ADVANCE,
+                        employee_id: data.employee_id,
+                        is_deducted: false 
+                    } 
+                }
+            );
+
+            return salary;
+        } catch (error) {
+            throw new Error('Failed to create salary with advance deduction');
         }
     }
 

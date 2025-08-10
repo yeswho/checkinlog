@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import 'module-alias/register';
 import app from './app';
 import logger from './utils/logger';
+import './jobs/dailySummaryJob';
 
 dotenv.config();
 

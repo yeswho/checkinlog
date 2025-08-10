@@ -36,6 +36,19 @@ class ExpenseService extends BaseService<Expense> {
         }
     }
 
+     async getEmployeeAdvances(employeeId: number): Promise<Expense[]> {
+        try {
+            return await Expense.findAll({
+                where: { 
+                    category: EXPENSE_CATEGORY.EMPLOYEE_ADVANCE,
+                    employee_id: employeeId
+                }
+            });
+        } catch (error) {
+            throw new Error('Failed to fetch employee advances');
+        }
+    }
+
     // Calculate total expenses in a date range
     async calculateTotalExpenses(startDate: Date, endDate: Date): Promise<number> {
         try {

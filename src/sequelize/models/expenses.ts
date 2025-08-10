@@ -1,6 +1,8 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model } from '@sequelize/core';
 import { Attribute, AutoIncrement, NotNull, PrimaryKey, Table } from '@sequelize/core/decorators-legacy';
 import { EXPENSE_CATEGORY } from '@src/enums/database';
+import { BelongsTo } from '@sequelize/core/decorators-legacy';
+import { Employee } from './employee';
 
 @Table({ tableName: 'expenses' })
 export class Expense extends Model<InferAttributes<Expense>, InferCreationAttributes<Expense>> {
@@ -29,9 +31,19 @@ export class Expense extends Model<InferAttributes<Expense>, InferCreationAttrib
     @NotNull
     declare remarks: string;
 
+    @Attribute(DataTypes.BOOLEAN)
+    @NotNull
+    declare is_deducted: boolean;
+
+    @Attribute(DataTypes.INTEGER)
+    declare employee_id: number | null;
+
     @Attribute(DataTypes.DATE)
     declare createdAt: CreationOptional<Date>;
 
     @Attribute(DataTypes.DATE)
     declare updatedAt: CreationOptional<Date>;
+
+    @BelongsTo(() => Employee, { foreignKey: 'employee_id' })
+    declare employee: Employee;
 }

@@ -69,6 +69,7 @@ export enum EXPENSE_CATEGORY {
     FURNITURE_AND_EQUIPMENT = 'Furniture and Equipment',
     INSURANCE = 'Insurance',
     MISCELLANEOUS = 'Miscellaneous',
+    EMPLOYEE_ADVANCE = 'Employee Advance',
 }
 
 export enum BOOKING_SOURCE {
