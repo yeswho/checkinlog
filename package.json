@@ -62,15 +62,15 @@
     "ts-node-dev": "^2.0.0"
   },
   "_moduleAliases": {
-    "@src": "dist",
-    "@routes": "dist/routes",
-    "@utils": "dist/utils",
-    "@orm": "dist/sequelize",
-    "@middleware": "dist/middleware",
-    "@models": "dist/sequelize/models",
-    "@controllers": "dist/controllers",
-    "@services": "dist/services",
-    "@validator": "dist/validation",
-    "@interface": "dist/interface"
+    "@src": "src",
+    "@routes": "src/routes",
+    "@utils": "src/utils",
+    "@orm": "src/sequelize",
+    "@middleware": "src/middleware",
+    "@models": "src/sequelize/models",
+    "@controllers": "src/controllers",
+    "@services": "src/services",
+    "@validator": "src/validation",
+    "@interface": "src/interface"
   }
 }
