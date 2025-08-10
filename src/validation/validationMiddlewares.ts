@@ -7,6 +7,11 @@ import { bookingSchema, bookingUpdateSchema } from './schema/bookingSchema';
 import { complaintSchema, complaintUpdateSchema } from './schema/complaintSchema';
 import { maintenanceSchema, maintenanceUpdateSchema } from './schema/maintenanceSchema';
 import {billingSchema, billingUpdateSchema} from './schema/billingSchema';
+import { employeeCreateSchema, employeeUpdateSchema } from './schema/employeeSchema';
+import { salaryCreateSchema, salaryUpdateSchema } from './schema/salarySchema';
+import { expenseCreateSchema, expenseUpdateSchema } from './schema/expenseSchema';
+import { dailySummarySchema, dateRangeSchema, revenueGenerateSchema, yearComparisonSchema, yearParamSchema } from './schema/revenueSchema';
+import { CustomError } from '@src/middleware/errorHandler';
 
 export const validateCustomer = (req: Request, res: Response, next: NextFunction) => {
     const { error } = customerSchema.validate(req.body);
@@ -136,3 +141,90 @@ export const validateBillingUpdate = (req: Request, res: Response, next:NextFunc
     next();
 }
 
+export const validateEmployee = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = employeeCreateSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+
+export const validateEmployeeUpdate = (req: Request, res: Response, next:NextFunction)=>{
+    const {error} = employeeUpdateSchema.validate(req.body);
+    if(error){
+        return res.status(400).json({message: error.details[0].message});
+    }
+    next();
+}
+
+export const validateSalary = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = salaryCreateSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    next();
+};
+
+export const validateSalaryUpdate = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = salaryUpdateSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    next();
+};
+
+export const validateExpense = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = expenseCreateSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    next();
+};
+
+export const validateExpenseUpdate = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = expenseUpdateSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    next();
+};
+
+export const validateDailySummary = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = dailySummarySchema.validate(req.query);
+    if (error) {
+        throw new CustomError(error.details[0].message, 400);
+    }
+    next();
+};
+
+export const validateDateRange = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = dateRangeSchema.validate(req.query);
+    if (error) {
+        throw new CustomError(error.details[0].message, 400);
+    }
+    next();
+};
+
+export const validateYearParam = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = yearParamSchema.validate(req.params);
+    if (error) {
+        throw new CustomError(error.details[0].message, 400);
+    }
+    next();
+};
+
+export const validateYearComparison = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = yearComparisonSchema.validate(req.query);
+    if (error) {
+        throw new CustomError(error.details[0].message, 400);
+    }
+    next();
+};
+
+export const validateRevenueGenerate = (req: Request, res: Response, next: NextFunction) => {
+    const { error } = revenueGenerateSchema.validate(req.body);
+    if (error) {
+        throw new CustomError(error.details[0].message, 400);
+    }
+    next();
+};

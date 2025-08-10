@@ -12,6 +12,7 @@ router.get('/details',authenticateToken, roomController.getRoomDetails);
 
 // Authenticated routes (require authentication)
 router.get('/', authenticateToken, roomController.getAllRooms); // Only authenticated users can access
+router.get('/available', authenticateToken, roomController.getAvailableRooms); // Only authenticated users can access
 router.get('/:id', authenticateToken, roomController.getRoomById); // Only authenticated users can access
 
 // Admin-only routes (require authentication and admin role)

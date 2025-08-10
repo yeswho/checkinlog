@@ -21,8 +21,24 @@ export class RoomController {
       next(error);
     }
   };
+
+  getAvailableRooms = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { checkIn, checkOut } = req.query;
+
+      const availableRooms = await RoomService.getAvailableRooms({
+        checkIn: checkIn as string,
+        checkOut: checkOut as string
+      });
+
+      res.json(availableRooms);
+    } catch (error) {
+      next(error);
+    }
+  }
+  
   // Add a room
-  addRoom= async (req: Request, res: Response, next: NextFunction) => {
+  addRoom = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const newRoom = await RoomService.create(req.body);
       res.status(201).json(newRoom);
@@ -50,26 +66,26 @@ export class RoomController {
       next(error);
     }
   };
-// Get all rooms in floor :id
-getRoomsInFloor = async (req: Request, res:Response, next: NextFunction) => {
-  try{
-    const { id } = req.params;
-    const rooms = await RoomService.getRoomsInFloor(Number(id));
-    res.status(200).json({
-      status: 'success',
-      data: rooms,
-    });
-  } catch (error) {
-    next(error);
+  // Get all rooms in floor :id
+  getRoomsInFloor = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const rooms = await RoomService.getRoomsInFloor(Number(id));
+      res.status(200).json({
+        status: 'success',
+        data: rooms,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-}
-//Get room details for table
-getRoomDetails = async (req:Request, res: Response, next: NextFunction) => {
-  try{
-    const roomDetails = await RoomService.getAllRoomDetails();
-    res.json(roomDetails);
-  } catch (error) {
-    next(error);
+  //Get room details for table
+  getRoomDetails = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const roomDetails = await RoomService.getAllRoomDetails();
+      res.json(roomDetails);
+    } catch (error) {
+      next(error);
+    }
   }
-}
 }

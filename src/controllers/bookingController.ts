@@ -1,4 +1,5 @@
 import BookingService from '@services/bookingService';
+import { CustomError } from '@src/middleware/errorHandler';
 import { NextFunction, Request, Response } from 'express';
 
 export class BookingController {
@@ -50,12 +51,56 @@ export class BookingController {
   // Add a booking
   addBooking = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log(`Received booking data: ${JSON.stringify(req.body)}`); // Debug log
+      
       const newBooking = await BookingService.create(req.body);
       res.status(201).json(newBooking);
     } catch (error) {
       next(error);
     }
   };
+
+ sendConfirmationEmail = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const recipient = req.body;
+     const { bookingId } = req.params;
+     console.log("ID IS ", bookingId);
+     
+    
+    await BookingService.sendConfirmationEmail(Number(bookingId));
+    res.status(200).json({ message: 'Confirmation email sent successfully' });
+  } catch (error) {
+    if (error instanceof CustomError) {
+      res.status(error.statusCode).json({ error: error.message });
+    }
+    else {
+      console.error('Email sending error:', error);
+      res.status(500).json({ error: 'Failed to send confirmation email' });
+    }
+  }
+};
+
+async updateBookingRooms(req: Request, res: Response) {
+  try {
+    const { bookingId } = req.params;
+    const { roomIds } = req.body;
+    
+    const updatedBooking = await BookingService.updateRoomsForBooking(
+      Number(bookingId),
+      roomIds
+    );
+    
+    res.json(updatedBooking);
+  } catch (error) {
+    if (error instanceof CustomError) {
+      res.status(error.statusCode).json({ error: error.message });
+    } else {
+      console.error('Room update error:', error);
+      res.status(500).json({ error: 'Failed to update booking rooms' });
+    }
+  }
+}
+
   // Update a booking
   updateBooking = async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
@@ -66,6 +111,18 @@ export class BookingController {
       next(error);
     }
   };
+
+  bookingFromWeb = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const bookingData = req.body;
+      console.log(`Received booking data: ${JSON.stringify(bookingData)}`); // Debug log
+      
+      const newBooking = await BookingService.bookingFromWeb(bookingData);
+      res.status(201).json(newBooking);
+    } catch (error) {
+      next(error);
+    }
+  }
   // Delete a booking
   deleteBooking = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -138,4 +195,26 @@ export class BookingController {
         next(error)
       }
     }
+    // add additional booking
+    addAdditional = async (req: Request, res: Response, next: NextFunction) => {
+      try {
+          const { id } = req.params;
+          const { description, amount, isFood } = req.body;
+
+          const additionalCharge = await BookingService.addAdditionalCharge(
+              Number(id),
+              description,
+              amount,
+              isFood
+          );
+
+          res.status(201).json({
+              status: 'success',
+              data: additionalCharge,
+          });
+      } catch (error) {
+          next(error);
+      }
+  }
+
 }

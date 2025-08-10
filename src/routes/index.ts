@@ -8,6 +8,11 @@ import userRoutes from '@routes/userRoute';
 import complaintRoutes from '@routes/complaintRoutes';
 import maintenanceRoutes from '@routes/maintenanceRoutes';
 import billingRoutes from '@routes/billingRoutes';
+import employeeRoutes from '@routes/employeeRoutes';
+import salaryRoutes from '@routes/salaryRoutes';
+import expenseRoutes from '@routes/expenseRoutes';
+import revenueRoutes from '@routes/revenueRoutes';
+import dashboardRoutes from '@routes/dashboardRoutes';
 
 const router = Router();
 
@@ -26,5 +31,11 @@ router.use('/user', userRoutes);
 router.use('/complaints', complaintRoutes);
 router.use('/maintenances', maintenanceRoutes);
 router.use('/billings', billingRoutes);
+router.use('/employees', employeeRoutes);
+router.use('/salaries', salaryRoutes);
+router.use('/expenses', expenseRoutes);
+router.use('/revenue', revenueRoutes);
+router.use('/dashboard', dashboardRoutes);
+
 
 export default router;

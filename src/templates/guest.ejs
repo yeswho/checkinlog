@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #4a6baf;
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 25px;
+        }
+        .footer {
+            margin-top: 20px;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        .highlight {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+        h3 {
+            color: #4a6baf;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .contact-info {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Booking Confirmation</h1>
+            <p>Reference #<%= bookingReference %></p>
+        </div>
+        
+        <div class="content">
+            <p>Dear <%= firstName %> <%= lastName %>,</p>
+            <p>Thank you for choosing Hotel JanakpurInn! Your booking has been confirmed. Below are your booking details:</p>
+            
+            <div class="highlight">
+                <h3>Booking Summary</h3>
+                <table>
+                    <tr>
+                        <th>Check-in Date</th>
+                        <td><%= checkIn %></td>
+                    </tr>
+                    <tr>
+                        <th>Check-out Date</th>
+                        <td><%= checkOut %></td>
+                    </tr>
+                    <tr>
+                        <th>Total Nights</th>
+                        <td><%= nights %></td>
+                    </tr>
+                    <tr>
+                        <th>Total Amount</th>
+                        <td>NPR <%= total %></td>
+                    </tr>
+                    <tr>
+                        <th>Payment Method</th>
+                        <td><%= paymentMethod %></td>
+                    </tr>
+                    <% if (specialRequests && specialRequests !== 'None') { %>
+                    <tr>
+                        <th>Special Requests</th>
+                        <td><%= specialRequests %></td>
+                    </tr>
+                    <% } %>
+                </table>
+            </div>
+            
+            <h3>Room Details</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Room Type</th>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Rate/Night</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% rooms.forEach(room => { %>
+                    <tr>
+                        <td><%= room.type %></td>
+                        <td>
+                            <%= room.name %><br>
+                            <small>Size: <%= room.size %>, Capacity: <%= room.capacity %></small>
+                        </td>
+                        <td><%= room.quantity %></td>
+                        <td>NPR <%= room.rate %></td>
+                    </tr>
+                    <% }); %>
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: right;">Total:</td>
+                        <td>NPR <%= total %></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="contact-info">
+                <h3>Need Assistance?</h3>
+                <p>If you have any questions or need to modify your booking, please contact us:</p>
+                <p>
+                    <strong>Email:</strong> janakpurinnhna2079@gmail.com<br>
+                    <strong>Phone:</strong> +977-9810685891<br>
+                    <strong>Address:</strong> Janakpur, Nepal
+                </p>
+            </div>
+            
+            <p>We look forward to welcoming you to Hotel JanakpurInn!</p>
+        </div>
+        
+        <div class="footer">
+            <p>© <%= new Date().getFullYear() %> Hotel JanakpurInn. All rights reserved.</p>
+            <p>
+                <a href="https://janakpurinn.com" style="color: #4a6baf; text-decoration: none;">Visit our website</a> | 
+                <a href="https://janakpurinn.com/contact" style="color: #4a6baf; text-decoration: none;">Contact Us</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

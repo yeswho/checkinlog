@@ -2,7 +2,7 @@
 import { Sequelize } from '@sequelize/core';
 import { MySqlDialect } from '@sequelize/mysql';
 import dotenv from 'dotenv';
-import { Customer, Floor, RoomType, Room, Booking, User, Maintenance, BookingRoom, Complaint, Billing } from '@src/sequelize/models/index';
+import { Customer, Floor, RoomType, Room, Booking, User, Maintenance, BookingRoom, Complaint, AdditionalCharge, Billing, Employee, Salary, Expense, RevenueSummary } from '@src/sequelize/models/index';
 import logger from '@src/utils/logger';
 
 dotenv.config();
@@ -14,7 +14,7 @@ const sequelize = new Sequelize({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: parseInt(process.env.DB_PORT || '3306', 10),
-  models: [Customer, Floor, RoomType, User, Maintenance, Room, Booking, BookingRoom, Complaint, Billing]
+  models: [Customer, Floor, RoomType, User, Maintenance, Room, Booking, BookingRoom, Complaint,AdditionalCharge, Billing, Employee, Salary, Expense, RevenueSummary]
 });
 
 (async () => {

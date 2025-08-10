@@ -1,4 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { CustomError } from './errorHandler';
+import { User } from '../sequelize/models/user';
 
 declare global {
     namespace Express {
@@ -7,17 +10,6 @@ declare global {
         }
     }
 }
-
-import jwt from 'jsonwebtoken';
-import { CustomError } from './errorHandler';
-import { User } from '../sequelize/models/user';
-import { Redis } from 'ioredis';
-
-// Initialize Redis client
-const redis = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: Number(process.env.REDIS_PORT) || 6379,
-});
 
 export interface TokenPayload {
     userId: string;
@@ -38,16 +30,7 @@ export const createTokens = async (user: User) => {
         { expiresIn: '1h' }
     );
 
-    const refreshToken = jwt.sign(
-        {
-            userId: user.id,
-            tokenVersion: user.tokenVersion,
-        },
-        process.env.JWT_REFRESH_SECRET!,
-        { expiresIn: '7d' }
-    );
-
-    return { accessToken, refreshToken };
+    return { accessToken };
 };
 
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -56,20 +39,14 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         const token = authHeader && authHeader.split(' ')[1];
 
         if (!token) {
-            throw new CustomError('No token provided', 401);
-        }
-
-        // Check if token is blacklisted
-        const isBlacklisted = await redis.get(`bl_${token}`);
-        if (isBlacklisted) {
-            throw new CustomError('Token is invalid', 401);
+            return res.status(401).json({ message: 'No token provided' });
         }
 
         const payload = jwt.verify(token, process.env.JWT_SECRET_KEY!) as TokenPayload;
 
         const user = await User.findByPk(payload.userId);
         if (!user || user.tokenVersion !== payload.tokenVersion) {
-            throw new CustomError('Token is invalid', 401);
+            return res.status(401).json({ message: 'Token is invalid or revoked' });
         }
 
         req.user = user;
@@ -78,20 +55,19 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         next();
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
-            throw new CustomError('Token has expired', 401);
+            return res.status(401).json({ message: 'Token has expired' });
         }
         if (error instanceof jwt.JsonWebTokenError) {
-            throw new CustomError('Invalid token', 401);
+            return res.status(401).json({ message: 'Invalid token' });
         }
         next(error);
     }
 };
 
-// Middleware to enforce role-based access control
 export const authorizeRole = (requiredRole: 'admin' | 'standard') => {
     return (req: Request, res: Response, next: NextFunction) => {
         const userRole = req.userRole;
-        
+
         if (userRole !== requiredRole) {
             throw new CustomError('Access denied. You do not have the required role.', 403);
         }

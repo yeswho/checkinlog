@@ -12,10 +12,10 @@ const app = express();
 
 import bcrypt from 'bcryptjs';
 
-bcrypt.hash("admin@123", 10, (err: any, hash: any) => {
-  if (err) throw err;
-  console.log("HASH IS HAHA hehe lala", hash);
-});
+// bcrypt.hash("admin@123", 10, (err: any, hash: any) => {
+//   if (err) throw err;
+//   console.log("HASH IS HAHA hehe lala", hash);
+// });
 // Middleware setup
 app.use(helmet());
 app.use(cors());

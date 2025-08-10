@@ -1,8 +1,7 @@
-// Billing service
-
 import { BOOKING_STATUS, TAX_RATES } from '@src/enums/database';
 import { CustomError } from '@src/middleware/errorHandler';
 import { Floor, RoomType } from '@src/sequelize/models';
+import { AdditionalCharge } from '@src/sequelize/models/additionalCharge';
 import { Billing } from '@src/sequelize/models/billings';
 import { Booking } from '@src/sequelize/models/bookingsModel';
 import { Customer } from '@src/sequelize/models/customerModel';
@@ -30,6 +29,10 @@ class BillingService extends BaseService<Billing> {
                             { model: RoomType, attributes: ['name'] },
                         ],
                         through: { attributes: [] },
+                    },
+                    {
+                        model: AdditionalCharge,
+                        attributes: ['description', 'amount', 'isFood'],
                     },
                 ],
             });
@@ -74,14 +77,32 @@ class BillingService extends BaseService<Billing> {
             const VAT_RATE = TAX_RATES.VAT_RATE;
             const SERVICE_CHARGE_RATE = TAX_RATES.SERVICE_CHARGE;
 
+            // Calculate total room charges
             const totalRoomCharges = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
-            const tax = totalRoomCharges * TAX_RATE;
-            const vat = totalRoomCharges * VAT_RATE;
-            const serviceCharge = totalRoomCharges * SERVICE_CHARGE_RATE;
 
-            const subtotal = totalRoomCharges + tax + vat + serviceCharge;
+            // Separate food and non-food charges
+            const foodCharges = booking.additionalCharges.filter((charge) => charge.isFood);
+            const otherCharges = booking.additionalCharges.filter((charge) => !charge.isFood);
+
+            // Calculate total food charges
+            const totalFoodCharges = foodCharges.reduce((sum, charge) => sum + charge.amount, 0);
+
+            // Calculate total other charges
+            const totalOtherCharges = otherCharges.reduce((sum, charge) => sum + charge.amount, 0);
+
+            // Calculate total additional charges
+            const totalAdditionalCharges = totalFoodCharges + totalOtherCharges;
+
+            // Calculate tax, VAT, and service charge on the total room charge (room charges)
+            const tax = (totalRoomCharges) * TAX_RATE;
+            const vat = (totalRoomCharges) * VAT_RATE;
+            const serviceCharge = (totalRoomCharges) * SERVICE_CHARGE_RATE;
+
+            // Calculate subtotal and final amount
+            const subtotal = totalRoomCharges + totalAdditionalCharges + tax + vat + serviceCharge;
             const finalAmount = subtotal - billing.discount + billing.extra_charge;
 
+            // Prepare the printable bill
             const printableBill = {
                 customer: {
                     name: `${booking.customer.firstname} ${booking.customer.lastname}`,
@@ -100,8 +121,18 @@ class BillingService extends BaseService<Billing> {
                     rate: room.rate,
                     total: (room.rate || 0) * duration,
                 })),
+                foodCharges: foodCharges.map((charge) => ({
+                    description: charge.description,
+                    amount: charge.amount,
+                })),
+                otherCharges: otherCharges.map((charge) => ({
+                    description: charge.description,
+                    amount: charge.amount,
+                })),
                 charges: {
                     totalRoomCharges: totalRoomCharges.toFixed(2),
+                    totalFoodCharges: totalFoodCharges.toFixed(2),
+                    totalOtherCharges: totalOtherCharges.toFixed(2),
                     tax: tax.toFixed(2),
                     vat: vat.toFixed(2),
                     serviceCharge: serviceCharge.toFixed(2),
@@ -143,6 +174,10 @@ class BillingService extends BaseService<Billing> {
                         ],
                         through: { attributes: [] },
                     },
+                    {
+                        model: AdditionalCharge, // Include additional charges
+                        attributes: ['description', 'amount', 'isFood'],
+                    },
                 ],
                 order: [['createdAt', 'DESC']],
             });
@@ -179,12 +214,29 @@ class BillingService extends BaseService<Billing> {
                     const VAT_RATE = TAX_RATES.VAT_RATE;
                     const SERVICE_CHARGE_RATE = TAX_RATES.SERVICE_CHARGE;
 
+                    // Calculate total room charges
                     const totalRoomCharges = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
-                    const tax = totalRoomCharges * TAX_RATE;
-                    const vat = totalRoomCharges * VAT_RATE;
-                    const serviceCharge = totalRoomCharges * SERVICE_CHARGE_RATE;
 
-                    const subtotal = totalRoomCharges + tax + vat + serviceCharge;
+                    // Separate food and non-food charges
+                    const foodCharges = booking.additionalCharges.filter((charge) => charge.isFood);
+                    const otherCharges = booking.additionalCharges.filter((charge) => !charge.isFood);
+
+                    // Calculate total food charges
+                    const totalFoodCharges = foodCharges.reduce((sum, charge) => sum + charge.amount, 0);
+
+                    // Calculate total other charges
+                    const totalOtherCharges = otherCharges.reduce((sum, charge) => sum + charge.amount, 0);
+
+                    // Calculate total additional charges
+                    const totalAdditionalCharges = totalFoodCharges + totalOtherCharges;
+
+                    // Calculate tax, VAT, and service charge on the total room charge (room charges)
+                    const tax = (totalRoomCharges) * TAX_RATE;
+                    const vat = (totalRoomCharges) * VAT_RATE;
+                    const serviceCharge = (totalRoomCharges) * SERVICE_CHARGE_RATE;
+
+                    // Calculate subtotal and final amount
+                    const subtotal = totalRoomCharges + totalAdditionalCharges + tax + vat + serviceCharge;
                     const finalAmount = subtotal - billing.discount + billing.extra_charge;
 
                     return {
@@ -205,8 +257,18 @@ class BillingService extends BaseService<Billing> {
                             rate: room.rate,
                             total: (room.rate || 0) * duration,
                         })),
+                        foodCharges: foodCharges.map((charge) => ({
+                            description: charge.description,
+                            amount: charge.amount,
+                        })),
+                        otherCharges: otherCharges.map((charge) => ({
+                            description: charge.description,
+                            amount: charge.amount,
+                        })),
                         charges: {
                             totalRoomCharges: totalRoomCharges.toFixed(2),
+                            totalFoodCharges: totalFoodCharges.toFixed(2),
+                            totalOtherCharges: totalOtherCharges.toFixed(2),
                             tax: tax.toFixed(2),
                             vat: vat.toFixed(2),
                             serviceCharge: serviceCharge.toFixed(2),
@@ -231,6 +293,6 @@ class BillingService extends BaseService<Billing> {
             throw new CustomError('Failed to fetch all printable bills', 500);
         }
     }
-    
 }
+
 export default new BillingService();
