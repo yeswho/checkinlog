@@ -82,7 +82,10 @@ export class RoomController {
   //Get room details for table
   getRoomDetails = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const roomDetails = await RoomService.getAllRoomDetails();
+      const { page, pageSize, filter, status, sortColumn, sortDirection } = req.query;
+      const parsedPage = page ? parseInt(page as string) : 1;
+      const parsedPageSize = pageSize ? parseInt(pageSize as string) : 20;
+      const roomDetails = await RoomService.getAllRoomDetails(parsedPage, parsedPageSize, filter as string, status as string, sortColumn as string, sortDirection as 'asc' | 'desc');
       res.json(roomDetails);
     } catch (error) {
       next(error);

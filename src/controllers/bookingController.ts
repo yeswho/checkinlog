@@ -217,4 +217,14 @@ async updateBookingRooms(req: Request, res: Response) {
       }
   }
 
+    // Get room availability for a specific month and year
+    getRoomAvailability = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { year, month } = req.params;
+            const availability = await BookingService.getRoomAvailability(parseInt(year), parseInt(month));
+            res.json(availability);
+        } catch (error) {
+            next(error);
+        }
+    };
 }

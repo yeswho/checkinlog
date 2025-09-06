@@ -16,6 +16,7 @@ router.post('/web', bookingController.bookingFromWeb);
 // Authenticated routes (require authentication)
 router.get('/', authenticateToken, bookingController.getAllBookings); 
 router.get('/:id', authenticateToken, bookingController.getBookingById);
+router.get('/room-availability/:year/:month', authenticateToken, (req, res, next) => bookingController.getRoomAvailability(req, res, next));
 router.put('/:bookingId/rooms', authenticateToken, bookingController.updateBookingRooms);
 router.get('/:bookingId/additional', authenticateToken, additionalChargeController.getAdditionalCharges);
 router.post('/:bookingId/additional', authenticateToken, additionalChargeController.addAdditionalCharge); 

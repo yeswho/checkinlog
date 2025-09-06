@@ -1,7 +1,7 @@
 import { literal, Op, sql } from '@sequelize/core';
 import { BOOKING_SOURCE, BOOKING_STATUS, GENDER, PAYMENT_MODE, ROOM_STATUS } from '@src/enums/database';
 import { CustomError } from '@src/middleware/errorHandler';
-import { Billing, Booking, BookingRoom, Customer, Floor, Room, RoomType } from '@src/sequelize/models';
+import { Billing, Booking, BookingRoom, Customer, Floor, Maintenance, Room, RoomType } from '@src/sequelize/models';
 import { AdditionalCharge } from '@src/sequelize/models/additionalCharge';
 import { sendBookingEmails } from '@src/utils/mailService';
 import BaseService from '@src/services/baseService';
@@ -1211,6 +1211,88 @@ class BookingService extends BaseService<Booking> {
     }
   }
 
+  async getRoomAvailability(year: number, month: number): Promise<any[]> {
+    try {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month
+
+      const rooms = await Room.findAll({
+        include: [
+          { model: RoomType, attributes: ['name'] },
+          { model: Floor, attributes: ['name'] },
+          {
+            model: Booking,
+            required: false,
+            where: {
+              [Op.or]: [
+                {
+                  check_in: { [Op.lte]: endDate },
+                  check_out: { [Op.gte]: startDate },
+                },
+              ],
+              status: {
+                [Op.notIn]: [
+                  BOOKING_STATUS.CANCELLED,
+                  BOOKING_STATUS.COMPLETED,
+                  BOOKING_STATUS.NO_SHOW,
+                ],
+              },
+            },
+            include: [
+              { model: Customer, attributes: ['firstname', 'lastname', 'contact'] },
+            ],
+          },
+          {
+            model: Maintenance,
+            required: false,
+            where: {
+              [Op.or]: [
+                {
+                  startDate: { [Op.lte]: endDate },
+                  expectedEndDate: { [Op.gte]: startDate },
+                },
+              ],
+            },
+          },
+        ],
+        attributes: ['id', 'name', 'rate'],
+      });
+
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const roomAvailability = rooms.map(room => {
+        const dailyAvailability = Array.from({ length: daysInMonth }, (_, i) => {
+          const day = i + 1;
+          const currentDay = new Date(year, month - 1, day);
+
+          // Check for existing bookings
+          const isBooked = room.bookings?.some(booking => {
+            return (currentDay >= booking.check_in && currentDay <= booking.check_out);
+          });
+
+          // Check for ongoing maintenance
+          const isUnderMaintenance = room.maintenances?.some(maintenance => {
+            return (currentDay >= maintenance.startDate && currentDay <= maintenance.expectedEndDate);
+          });
+
+          return { day, available: !isBooked && !isUnderMaintenance };
+        });
+
+        return {
+          id: room.id,
+          name: room.name,
+          roomType: room.roomType.name,
+          floor: room.floor.name,
+          rate: room.rate,
+          availability: dailyAvailability,
+        };
+      });
+
+      return roomAvailability;
+    } catch (error) {
+      console.error('Error fetching room availability:', error);
+      throw new CustomError('Failed to fetch room availability', 500);
+    }
+  }
 }
 
 export default new BookingService();

@@ -146,11 +146,42 @@ class RoomService extends BaseService<Room> {
     }
   }
 
-  async getAllRoomDetails(): Promise<RoomDetails[]> {
+  async getAllRoomDetails(
+    page: number = 1,
+    pageSize: number = 20,
+    filter?: string,
+    statusFilter?: string,
+    sortColumn?: string,
+    sortDirection?: 'asc' | 'desc'
+  ): Promise<{ rows: RoomDetails[]; count: number }> {
     try {
       const currentDate = new Date();
+      const offset = (page - 1) * pageSize;
 
-      const rooms = await this.model.findAll({
+      const whereClause: any = {};
+      if (filter) {
+        whereClause.name = { [Op.like]: `%${filter}%` };
+      }
+      if (statusFilter && statusFilter !== 'all') {
+        whereClause.status = statusFilter;
+      }
+
+      const orderClause: any[] = [];
+      if (sortColumn && sortDirection) {
+        if (sortColumn === 'floor') {
+          orderClause.push([Floor, 'name', sortDirection]);
+        } else if (sortColumn === 'room_type') {
+          orderClause.push([RoomType, 'name', sortDirection]);
+        } else {
+          orderClause.push([sortColumn, sortDirection]);
+        }
+      }
+
+      const { count, rows } = await this.model.findAndCountAll({
+        where: whereClause,
+        limit: pageSize,
+        offset: offset,
+        order: orderClause,
         include: [
           {
             model: Floor,
@@ -196,54 +227,57 @@ class RoomService extends BaseService<Room> {
       });
 
       // If no rooms are found, return an empty array
-      if (!rooms || rooms.length === 0) {
-        return [];
+      if (!rows || rows.length === 0) {
+        return { rows: [], count: 0 };
       }
 
-      return rooms.map((room) => {
-        let status = room.status;
+      return {
+        rows: rows.map((room) => {
+          let status = room.status;
 
-        if (room.maintenances && room.maintenances.length > 0) {
-          status = ROOM_STATUS.UNDER_MAINTAINANCE;
-        }
-        else if (room.bookings && room.bookings.length > 0) {
-          status = ROOM_STATUS.OCCUPIED;
-        }
+          if (room.maintenances && room.maintenances.length > 0) {
+            status = ROOM_STATUS.UNDER_MAINTAINANCE;
+          }
+          else if (room.bookings && room.bookings.length > 0) {
+            status = ROOM_STATUS.OCCUPIED;
+          }
 
-        return {
-          id: room.id,
-          name: room.name,
-          floor: room.floor ? { id: room.floor.id, name: room.floor.name } : null,
-          room_type: room.roomType ? { id: room.roomType.id, name: room.roomType.name } : null,
-          rate: room.rate,
-          status: status, // Use the dynamically determined status
-          occupiedDetails: room.bookings?.[0]
-            ? {
-              customer: {
-                firstName: room.bookings[0].customer.firstname,
-                lastName: room.bookings[0].customer.lastname,
-                contact: room.bookings[0].customer.contact,
-              },
-              checkIn: room.bookings[0].check_in.toISOString(),
-              checkOut: room.bookings[0].check_out.toISOString(),
-            }
-            : null,
-          maintenanceDetails: room.maintenances?.[0]
-            ? {
-              reason: room.maintenances[0].reason,
-              startDate: room.maintenances[0].startDate.toISOString(),
-              expectedEndDate: room.maintenances[0].expectedEndDate.toISOString(),
-            }
-            : null,
-          createdAt: room.createdAt.toISOString(),
-          updatedAt: room.updatedAt.toISOString(),
-        };
-      });
+          return {
+            id: room.id,
+            name: room.name,
+            floor: room.floor ? { id: room.floor.id, name: room.floor.name } : null,
+            room_type: room.roomType ? { id: room.roomType.id, name: room.roomType.name } : null,
+            rate: room.rate,
+            status: status, // Use the dynamically determined status
+            occupiedDetails: room.bookings?.[0]
+              ? {
+                customer: {
+                  firstName: room.bookings[0].customer.firstname,
+                  lastName: room.bookings[0].customer.lastname,
+                  contact: room.bookings[0].customer.contact,
+                },
+                checkIn: room.bookings[0].check_in.toISOString(),
+                checkOut: room.bookings[0].check_out.toISOString(),
+              }
+              : null,
+            maintenanceDetails: room.maintenances?.[0]
+              ? {
+                reason: room.maintenances[0].reason,
+                startDate: room.maintenances[0].startDate.toISOString(),
+                expectedEndDate: room.maintenances[0].expectedEndDate.toISOString(),
+              }
+              : null,
+            createdAt: room.createdAt.toISOString(),
+            updatedAt: room.updatedAt.toISOString(),
+          };
+        }),
+        count: count,
+      };
     } catch (err) {
       console.error('Error in getAllRoomDetails:', err);
 
-      // Return an empty array in case of any error
-      return [];
+      // Return an empty array and count in case of any error
+      return { rows: [], count: 0 };
     }
   }
 

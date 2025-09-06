@@ -32,7 +32,6 @@ export class Expense extends Model<InferAttributes<Expense>, InferCreationAttrib
     declare remarks: string;
 
     @Attribute(DataTypes.BOOLEAN)
-    @NotNull
     declare is_deducted: boolean;
 
     @Attribute(DataTypes.INTEGER)
