@@ -273,13 +273,181 @@ class BookingService extends BaseService<Booking> {
     }
   }
 
+  // async updateRoomsForBooking(bookingId: number, newRoomIds: number[]): Promise<Booking> {
+  //   return await Booking.sequelize.transaction(async (transaction) => {
+  //     // 1. Fetch the booking with current rooms
+  //     const booking = await Booking.findByPk(bookingId, {
+  //       include: [{
+  //         model: Room,
+  //         through: { attributes: [] }
+  //       }],
+  //       transaction
+  //     });
+
+  //     if (!booking) {
+  //       throw new CustomError('Booking not found', 404);
+  //     }
+
+  //     // 2. Validate booking status
+  //     if (![BOOKING_STATUS.PENDING, BOOKING_STATUS.BOOKED].includes(booking.status)) {
+  //       throw new CustomError('Rooms can only be updated for PENDING or BOOKED bookings', 400);
+  //     }
+
+  //     // 3. Get current and new rooms
+  //     const currentRooms = booking.rooms || [];
+  //     const currentRoomIds = currentRooms.map(room => room.id);
+
+  //     // If no change in rooms, return early
+  //     if (
+  //       newRoomIds.length === currentRoomIds.length &&
+  //       newRoomIds.every(id => currentRoomIds.includes(id))
+  //     ) {
+  //       return booking;
+  //     }
+
+  //     // 4. Check room availability for PENDING bookings
+  //     if (booking.status === BOOKING_STATUS.PENDING) {
+  //       const availableRooms = await Room.findAll({
+  //         where: {
+  //           id: newRoomIds,
+  //           status: ROOM_STATUS.AVAILABLE
+  //         },
+  //         transaction
+  //       });
+
+  //       if (availableRooms.length !== newRoomIds.length) {
+  //         throw new CustomError('One or more rooms are not available', 400);
+  //       }
+  //     }
+
+  //     // 5. For BOOKED status, verify rooms are already assigned to this booking
+  //     if (booking.status === BOOKING_STATUS.BOOKED) {
+  //       const existingRooms = await Room.findAll({
+  //         where: {
+  //           id: newRoomIds,
+  //           status: ROOM_STATUS.OCCUPIED
+  //         },
+  //         include: [{
+  //           model: Booking,
+  //           where: { id: bookingId },
+  //           through: { attributes: [] },
+  //           required: true
+  //         }],
+  //         transaction
+  //       });
+
+  //       if (existingRooms.length !== newRoomIds.length) {
+  //         throw new CustomError('Can only update with rooms already assigned to this booking', 400);
+  //       }
+  //     }
+
+  //     // 6. Check for overlapping bookings (only for PENDING status)
+  //     if (booking.status === BOOKING_STATUS.PENDING) {
+  //       const overlapping = await Booking.findAll({
+  //         where: {
+  //           [Op.and]: [
+  //             {
+  //               [Op.or]: [
+  //                 {
+  //                   check_in: { [Op.lt]: booking.check_out },
+  //                   check_out: { [Op.gt]: booking.check_in }
+  //                 }
+  //               ]
+  //             },
+  //             {
+  //               status: {
+  //                 [Op.notIn]: [
+  //                   BOOKING_STATUS.CANCELLED,
+  //                   BOOKING_STATUS.COMPLETED,
+  //                   BOOKING_STATUS.NO_SHOW
+  //                 ]
+  //               }
+  //             },
+  //             { id: { [Op.ne]: booking.id } }
+  //           ]
+  //         },
+  //         include: [{
+  //           model: Room,
+  //           where: { id: newRoomIds },
+  //           through: { attributes: [] }
+  //         }],
+  //         transaction
+  //       });
+
+  //       if (overlapping.length > 0) {
+  //         throw new CustomError('One or more rooms are already booked for these dates', 400);
+  //       }
+  //     }
+
+  //     // 7. Update room statuses in bulk
+  //     if (currentRoomIds.length > 0) {
+  //       await Room.update(
+  //         { status: ROOM_STATUS.AVAILABLE },
+  //         {
+  //           where: { id: currentRoomIds },
+  //           transaction
+  //         }
+  //       );
+  //     }
+
+  //     if (newRoomIds.length > 0) {
+  //       await Room.update(
+  //         {
+  //           status: booking.status === BOOKING_STATUS.PENDING
+  //             ? ROOM_STATUS.AVAILABLE
+  //             : ROOM_STATUS.OCCUPIED
+  //         },
+  //         {
+  //           where: { id: newRoomIds },
+  //           transaction
+  //         }
+  //       );
+  //     }
+
+  //     // 8. Update room associations
+  //     await BookingRoom.destroy({
+  //       where: { booking_id: bookingId },
+  //       transaction
+  //     });
+
+  //     await BookingRoom.bulkCreate(
+  //       newRoomIds.map(roomId => ({
+  //         booking_id: bookingId,
+  //         room_id: roomId
+  //       })),
+  //       { transaction }
+  //     );
+
+  //     // 9. Update booking status if needed
+  //     if (booking.status === BOOKING_STATUS.PENDING && newRoomIds.length > 0) {
+  //       await booking.update(
+  //         { status: BOOKING_STATUS.BOOKED },
+  //         { transaction }
+  //       );
+  //     }
+
+  //     // 10. Return updated booking
+  //     const updatedBooking = await Booking.findByPk(bookingId, {
+  //       include: [Room],
+  //       transaction
+  //     });
+  //     if (!updatedBooking) {
+  //       throw new CustomError('Booking not found after update', 404);
+  //     }
+  //     return updatedBooking;
+  //   });
+  // }
   async updateRoomsForBooking(bookingId: number, newRoomIds: number[]): Promise<Booking> {
     return await Booking.sequelize.transaction(async (transaction) => {
       // 1. Fetch the booking with current rooms
       const booking = await Booking.findByPk(bookingId, {
         include: [{
           model: Room,
-          through: { attributes: [] }
+          through: { attributes: [] },
+          include: [{
+            model: RoomType,
+            attributes: ['capacity']
+          }]
         }],
         transaction
       });
@@ -305,7 +473,29 @@ class BookingService extends BaseService<Booking> {
         return booking;
       }
 
-      // 4. Check room availability for PENDING bookings
+      // 4. Fetch the new rooms with their room types to calculate pax and rate
+      const newRooms = await Room.findAll({
+        where: { id: newRoomIds },
+        include: [{
+          model: RoomType,
+          attributes: ['capacity']
+        }],
+        transaction
+      });
+
+      if (newRooms.length !== newRoomIds.length) {
+        throw new CustomError('One or more rooms are invalid', 400);
+      }
+
+      // 5. Calculate new pax (total capacity) and rate (total room rates)
+      const totalPax = newRooms.reduce((sum, room) => {
+        const capacity = room.roomType?.capacity ? parseInt(room.roomType.capacity) : 1;
+        return sum + capacity;
+      }, 0);
+
+      const totalRate = newRooms.reduce((sum, room) => sum + (room.rate || 0), 0);
+
+      // 6. Check room availability for PENDING bookings
       if (booking.status === BOOKING_STATUS.PENDING) {
         const availableRooms = await Room.findAll({
           where: {
@@ -320,7 +510,7 @@ class BookingService extends BaseService<Booking> {
         }
       }
 
-      // 5. For BOOKED status, verify rooms are already assigned to this booking
+      // 7. For BOOKED status, verify rooms are already assigned to this booking
       if (booking.status === BOOKING_STATUS.BOOKED) {
         const existingRooms = await Room.findAll({
           where: {
@@ -341,7 +531,7 @@ class BookingService extends BaseService<Booking> {
         }
       }
 
-      // 6. Check for overlapping bookings (only for PENDING status)
+      // 8. Check for overlapping bookings (only for PENDING status)
       if (booking.status === BOOKING_STATUS.PENDING) {
         const overlapping = await Booking.findAll({
           where: {
@@ -379,7 +569,7 @@ class BookingService extends BaseService<Booking> {
         }
       }
 
-      // 7. Update room statuses in bulk
+      // 9. Update room statuses in bulk
       if (currentRoomIds.length > 0) {
         await Room.update(
           { status: ROOM_STATUS.AVAILABLE },
@@ -404,7 +594,7 @@ class BookingService extends BaseService<Booking> {
         );
       }
 
-      // 8. Update room associations
+      // 10. Update room associations
       await BookingRoom.destroy({
         where: { booking_id: bookingId },
         transaction
@@ -418,15 +608,19 @@ class BookingService extends BaseService<Booking> {
         { transaction }
       );
 
-      // 9. Update booking status if needed
+      // 11. Update booking with new pax, rate, and status if needed
+      const updateData: any = {
+        pax: totalPax,
+        rate: totalRate
+      };
+
       if (booking.status === BOOKING_STATUS.PENDING && newRoomIds.length > 0) {
-        await booking.update(
-          { status: BOOKING_STATUS.BOOKED },
-          { transaction }
-        );
+        updateData.status = BOOKING_STATUS.BOOKED;
       }
 
-      // 10. Return updated booking
+      await booking.update(updateData, { transaction });
+
+      // 12. Return updated booking
       const updatedBooking = await Booking.findByPk(bookingId, {
         include: [Room],
         transaction
@@ -1124,125 +1318,125 @@ class BookingService extends BaseService<Booking> {
     }
   }
 
-async searchBookings(query: string, page: number = 1, limit: number = 10): Promise<{ data: any[]; total: number }> {
-  try {
-    const offset = (page - 1) * limit;
+  async searchBookings(query: string, page: number = 1, limit: number = 10): Promise<{ data: any[]; total: number }> {
+    try {
+      const offset = (page - 1) * limit;
 
-    const { count, rows: bookings } = await Booking.findAndCountAll({
-      include: [
-        {
-          model: Customer,
-          attributes: ['id', 'firstname', 'lastname', 'email', 'contact'],
-          where: {
-            [Op.or]: [
-              { firstname: { [Op.like]: `%${query}%` } },
-              { lastname: { [Op.like]: `%${query}%` } },
-              { email: { [Op.like]: `%${query}%` } },
-            ],
+      const { count, rows: bookings } = await Booking.findAndCountAll({
+        include: [
+          {
+            model: Customer,
+            attributes: ['id', 'firstname', 'lastname', 'email', 'contact'],
+            where: {
+              [Op.or]: [
+                { firstname: { [Op.like]: `%${query}%` } },
+                { lastname: { [Op.like]: `%${query}%` } },
+                { email: { [Op.like]: `%${query}%` } },
+              ],
+            },
           },
-        },
-        {
-          model: Room,
-          include: [
-            { model: Floor, attributes: ['name'] },
-            { model: RoomType, attributes: ['name'] },
-          ],
-          through: { attributes: [] },
-        },
-        {
-          model: AdditionalCharge,
-          attributes: ['amount']
-        }
-      ],
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset,
-    });
-
-    if (!bookings || bookings.length === 0) {
-      throw new CustomError('No bookings found', 404);
-    }
-
-    const formattedBookings = bookings.map(async (booking) => {
-      const checkIn = new Date(booking.check_in);
-      const checkOut = new Date(booking.check_out);
-      const checkInNepal = new Date(checkIn.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
-      const checkOutNepal = new Date(checkOut.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
-      const checkInDateOnly = new Date(checkInNepal.getFullYear(), checkInNepal.getMonth(), checkInNepal.getDate());
-      const checkOutDateOnly = new Date(checkOutNepal.getFullYear(), checkOutNepal.getMonth(), checkOutNepal.getDate());
-      const duration = (checkOutDateOnly.getTime() - checkInDateOnly.getTime()) / (1000 * 3600 * 24);
-      const totalPrice = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
-
-      // FIX: Properly handle the requested_roomType JSON data
-      let roomTypes = [];
-      let requestedRoomNames: string[] = [];
-      
-      if (booking.requested_roomType) {
-        try {
-          // Parse the JSON if it's a string, or use directly if it's already parsed
-          const roomData = typeof booking.requested_roomType === 'string' 
-            ? JSON.parse(booking.requested_roomType) 
-            : booking.requested_roomType;
-          
-          // Extract room IDs from the array of objects
-          const roomIds = roomData.map((room: { id: any; }) => 
-            typeof room === 'object' ? room.id : room
-          ).filter((id: null) => id != null);
-          
-          if (roomIds.length > 0) {
-            roomTypes = await RoomType.findAll({
-              where: { id: roomIds }
-            });
-            requestedRoomNames = roomTypes.map(rt => rt.name);
+          {
+            model: Room,
+            include: [
+              { model: Floor, attributes: ['name'] },
+              { model: RoomType, attributes: ['name'] },
+            ],
+            through: { attributes: [] },
+          },
+          {
+            model: AdditionalCharge,
+            attributes: ['amount']
           }
-        } catch (error) {
-          console.error('Error parsing requested_roomType:', error);
-          // If parsing fails, try to handle as array of numbers directly
-          if (Array.isArray(booking.requested_roomType)) {
-            const roomIds = booking.requested_roomType.filter(id => typeof id === 'number');
+        ],
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset,
+      });
+
+      if (!bookings || bookings.length === 0) {
+        throw new CustomError('No bookings found', 404);
+      }
+
+      const formattedBookings = bookings.map(async (booking) => {
+        const checkIn = new Date(booking.check_in);
+        const checkOut = new Date(booking.check_out);
+        const checkInNepal = new Date(checkIn.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
+        const checkOutNepal = new Date(checkOut.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
+        const checkInDateOnly = new Date(checkInNepal.getFullYear(), checkInNepal.getMonth(), checkInNepal.getDate());
+        const checkOutDateOnly = new Date(checkOutNepal.getFullYear(), checkOutNepal.getMonth(), checkOutNepal.getDate());
+        const duration = (checkOutDateOnly.getTime() - checkInDateOnly.getTime()) / (1000 * 3600 * 24);
+        const totalPrice = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
+
+        // FIX: Properly handle the requested_roomType JSON data
+        let roomTypes = [];
+        let requestedRoomNames: string[] = [];
+
+        if (booking.requested_roomType) {
+          try {
+            // Parse the JSON if it's a string, or use directly if it's already parsed
+            const roomData = typeof booking.requested_roomType === 'string'
+              ? JSON.parse(booking.requested_roomType)
+              : booking.requested_roomType;
+
+            // Extract room IDs from the array of objects
+            const roomIds = roomData.map((room: { id: any; }) =>
+              typeof room === 'object' ? room.id : room
+            ).filter((id: null) => id != null);
+
             if (roomIds.length > 0) {
               roomTypes = await RoomType.findAll({
                 where: { id: roomIds }
               });
               requestedRoomNames = roomTypes.map(rt => rt.name);
             }
+          } catch (error) {
+            console.error('Error parsing requested_roomType:', error);
+            // If parsing fails, try to handle as array of numbers directly
+            if (Array.isArray(booking.requested_roomType)) {
+              const roomIds = booking.requested_roomType.filter(id => typeof id === 'number');
+              if (roomIds.length > 0) {
+                roomTypes = await RoomType.findAll({
+                  where: { id: roomIds }
+                });
+                requestedRoomNames = roomTypes.map(rt => rt.name);
+              }
+            }
           }
         }
+
+        // Calculate total additional charges
+        const totalAdditionalCharges = booking.additionalCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
+
+        return {
+          id: booking.id,
+          customer_id: booking.customer_id,
+          rooms: booking.rooms,
+          check_in: booking.check_in,
+          check_out: booking.check_out,
+          requested_roomType: requestedRoomNames,
+          duration,
+          totalPrice,
+          status: booking.status as BOOKING_STATUS,
+          additionalCharges: totalAdditionalCharges,
+          rate: booking.rate,
+          pax: booking.pax,
+          payment_mode: booking.payment_mode as PAYMENT_MODE,
+          createdAt: booking.createdAt,
+          updatedAt: booking.updatedAt,
+          customer: booking.customer,
+        };
+      });
+
+      const resolvedBookings = await Promise.all(formattedBookings);
+      return { data: resolvedBookings, total: count };
+    } catch (error) {
+      console.log('Search bookings error:', error);
+      if (error instanceof CustomError) {
+        throw error;
       }
-
-      // Calculate total additional charges
-      const totalAdditionalCharges = booking.additionalCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
-
-      return {
-        id: booking.id,
-        customer_id: booking.customer_id,
-        rooms: booking.rooms,
-        check_in: booking.check_in,
-        check_out: booking.check_out,
-        requested_roomType: requestedRoomNames,
-        duration,
-        totalPrice,
-        status: booking.status as BOOKING_STATUS,
-        additionalCharges: totalAdditionalCharges,
-        rate: booking.rate,
-        pax: booking.pax,
-        payment_mode: booking.payment_mode as PAYMENT_MODE,
-        createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt,
-        customer: booking.customer,
-      };
-    });
-
-    const resolvedBookings = await Promise.all(formattedBookings);
-    return { data: resolvedBookings, total: count };
-  } catch (error) {
-    console.log('Search bookings error:', error);
-    if (error instanceof CustomError) {
-      throw error;
+      throw new CustomError('Failed to search bookings', 500);
     }
-    throw new CustomError('Failed to search bookings', 500);
   }
-}
 
   async getRoomAvailability(year: number, month: number): Promise<any[]> {
     try {
