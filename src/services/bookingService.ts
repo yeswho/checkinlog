@@ -1124,92 +1124,125 @@ class BookingService extends BaseService<Booking> {
     }
   }
 
-  async searchBookings(query: string, page: number = 1, limit: number = 10): Promise<{ data: any[]; total: number }> {
-    try {
-      const offset = (page - 1) * limit;
+async searchBookings(query: string, page: number = 1, limit: number = 10): Promise<{ data: any[]; total: number }> {
+  try {
+    const offset = (page - 1) * limit;
 
-      const { count, rows: bookings } = await Booking.findAndCountAll({
-        include: [
-          {
-            model: Customer,
-            attributes: ['id', 'firstname', 'lastname', 'email', 'contact'],
-            where: {
-              [Op.or]: [
-                { firstname: { [Op.like]: `%${query}%` } },
-                { lastname: { [Op.like]: `%${query}%` } },
-                { email: { [Op.like]: `%${query}%` } },
-              ],
-            },
-          },
-          {
-            model: Room,
-            include: [
-              { model: Floor, attributes: ['name'] },
-              { model: RoomType, attributes: ['name'] },
+    const { count, rows: bookings } = await Booking.findAndCountAll({
+      include: [
+        {
+          model: Customer,
+          attributes: ['id', 'firstname', 'lastname', 'email', 'contact'],
+          where: {
+            [Op.or]: [
+              { firstname: { [Op.like]: `%${query}%` } },
+              { lastname: { [Op.like]: `%${query}%` } },
+              { email: { [Op.like]: `%${query}%` } },
             ],
-            through: { attributes: [] },
           },
-          {
-            model: AdditionalCharge,
-            attributes: ['amount']
-          }
-        ],
-        order: [['createdAt', 'DESC']],
-        limit,
-        offset,
-      });
+        },
+        {
+          model: Room,
+          include: [
+            { model: Floor, attributes: ['name'] },
+            { model: RoomType, attributes: ['name'] },
+          ],
+          through: { attributes: [] },
+        },
+        {
+          model: AdditionalCharge,
+          attributes: ['amount']
+        }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+    });
 
-      if (!bookings || bookings.length === 0) {
-        throw new CustomError('No bookings found', 404);
-      }
-
-      const formattedBookings = bookings.map(async (booking) => {
-        const checkIn = new Date(booking.check_in);
-        const checkOut = new Date(booking.check_out);
-        const checkInNepal = new Date(checkIn.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
-        const checkOutNepal = new Date(checkOut.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
-        const checkInDateOnly = new Date(checkInNepal.getFullYear(), checkInNepal.getMonth(), checkInNepal.getDate());
-        const checkOutDateOnly = new Date(checkOutNepal.getFullYear(), checkOutNepal.getMonth(), checkOutNepal.getDate());
-        const duration = (checkOutDateOnly.getTime() - checkInDateOnly.getTime()) / (1000 * 3600 * 24);
-        const totalPrice = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
-
-        const roomTypes = await RoomType.findAll({
-          where: { id: booking.requested_roomType }
-        });
-
-        // Calculate total additional charges
-        const totalAdditionalCharges = booking.additionalCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
-
-        return {
-          id: booking.id,
-          customer_id: booking.customer_id,
-          rooms: booking.rooms,
-          check_in: booking.check_in,
-          check_out: booking.check_out,
-          requested_roomType: roomTypes.map(rt => rt.name),
-          duration,
-          totalPrice,
-          status: booking.status as BOOKING_STATUS,
-          additionalCharges: totalAdditionalCharges,
-          rate: booking.rate,
-          pax: booking.pax,
-          payment_mode: booking.payment_mode as PAYMENT_MODE,
-          createdAt: booking.createdAt,
-          updatedAt: booking.updatedAt,
-          customer: booking.customer,
-        };
-      });
-
-      const resolvedBookings = await Promise.all(formattedBookings);
-      return { data: resolvedBookings, total: count };
-    } catch (error) {
-      console.log(error);
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError('Failed to search bookings', 500);
+    if (!bookings || bookings.length === 0) {
+      throw new CustomError('No bookings found', 404);
     }
+
+    const formattedBookings = bookings.map(async (booking) => {
+      const checkIn = new Date(booking.check_in);
+      const checkOut = new Date(booking.check_out);
+      const checkInNepal = new Date(checkIn.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
+      const checkOutNepal = new Date(checkOut.toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }));
+      const checkInDateOnly = new Date(checkInNepal.getFullYear(), checkInNepal.getMonth(), checkInNepal.getDate());
+      const checkOutDateOnly = new Date(checkOutNepal.getFullYear(), checkOutNepal.getMonth(), checkOutNepal.getDate());
+      const duration = (checkOutDateOnly.getTime() - checkInDateOnly.getTime()) / (1000 * 3600 * 24);
+      const totalPrice = booking.rooms.reduce((sum, room) => sum + ((room.rate || 0) * duration), 0);
+
+      // FIX: Properly handle the requested_roomType JSON data
+      let roomTypes = [];
+      let requestedRoomNames: string[] = [];
+      
+      if (booking.requested_roomType) {
+        try {
+          // Parse the JSON if it's a string, or use directly if it's already parsed
+          const roomData = typeof booking.requested_roomType === 'string' 
+            ? JSON.parse(booking.requested_roomType) 
+            : booking.requested_roomType;
+          
+          // Extract room IDs from the array of objects
+          const roomIds = roomData.map((room: { id: any; }) => 
+            typeof room === 'object' ? room.id : room
+          ).filter((id: null) => id != null);
+          
+          if (roomIds.length > 0) {
+            roomTypes = await RoomType.findAll({
+              where: { id: roomIds }
+            });
+            requestedRoomNames = roomTypes.map(rt => rt.name);
+          }
+        } catch (error) {
+          console.error('Error parsing requested_roomType:', error);
+          // If parsing fails, try to handle as array of numbers directly
+          if (Array.isArray(booking.requested_roomType)) {
+            const roomIds = booking.requested_roomType.filter(id => typeof id === 'number');
+            if (roomIds.length > 0) {
+              roomTypes = await RoomType.findAll({
+                where: { id: roomIds }
+              });
+              requestedRoomNames = roomTypes.map(rt => rt.name);
+            }
+          }
+        }
+      }
+
+      // Calculate total additional charges
+      const totalAdditionalCharges = booking.additionalCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
+
+      return {
+        id: booking.id,
+        customer_id: booking.customer_id,
+        rooms: booking.rooms,
+        check_in: booking.check_in,
+        check_out: booking.check_out,
+        requested_roomType: requestedRoomNames,
+        duration,
+        totalPrice,
+        status: booking.status as BOOKING_STATUS,
+        additionalCharges: totalAdditionalCharges,
+        rate: booking.rate,
+        pax: booking.pax,
+        payment_mode: booking.payment_mode as PAYMENT_MODE,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+        customer: booking.customer,
+      };
+    });
+
+    const resolvedBookings = await Promise.all(formattedBookings);
+    return { data: resolvedBookings, total: count };
+  } catch (error) {
+    console.log('Search bookings error:', error);
+    if (error instanceof CustomError) {
+      throw error;
+    }
+    throw new CustomError('Failed to search bookings', 500);
   }
+}
 
   async getRoomAvailability(year: number, month: number): Promise<any[]> {
     try {
