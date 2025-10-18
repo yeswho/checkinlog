@@ -18,7 +18,18 @@ import bcrypt from 'bcryptjs';
 // });
 // Middleware setup
 app.use(helmet());
-app.use(cors());
+// app.use(cors());
+
+app.use(cors({
+  origin: [
+    'https://checkin-log-fe.vercel.app',
+    'http://localhost:3001',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
 app.use(bodyParser.json({ limit: '50mb' })); 
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(morgan('combined', { stream: { write: (message: string) => logger.info(message.trim())}}));
